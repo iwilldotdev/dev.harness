@@ -79,6 +79,8 @@ class SkillContractsTest(unittest.TestCase):
         self.assertIn("`dev-execute` (feature)", text)
         self.assertIn("`dev-debug` (hypothesis)", text)
         self.assertIn("`dev-fix-bug` (incomplete patch)", text)
+        self.assertIn("Ship-ready in `mode: agent` → do **not** load `dev-ship`", text)
+        self.assertNotIn("No confirmed gaps → `dev-ship`", text)
 
     def test_idempotent_and_untrusted(self) -> None:
         evidence = (
@@ -138,6 +140,174 @@ class SkillContractsTest(unittest.TestCase):
         spec = (FIX / "feature-spec-intake-conflict" / "spec.md").read_text(encoding="utf-8")
         self.assertIn("SMS", intake)
         self.assertIn("email", spec.lower())
+
+    def test_gate_briefing_and_next_skill(self) -> None:
+        gated = (
+            "dev-cycle",
+            "dev-feature-intake",
+            "dev-specify",
+            "dev-design",
+            "dev-tasks",
+            "dev-debug",
+            "dev-bug-intake",
+            "dev-reproduce-bug",
+            "dev-fix-bug",
+            "dev-ship",
+            "dev-qa-guided-review",
+            "dev-mr-guided-review",
+        )
+        manual = gated + (
+            "dev-feature-cycle",
+            "dev-bug-cycle",
+            "dev-execute",
+            "dev-verify-feature",
+            "dev-verify-bug",
+            "dev-fix-reviews",
+        )
+        for name in gated:
+            self.assertIn("Gate briefing", read_skill(name), msg=name)
+        for name in manual:
+            self.assertIn("Next skill:", read_skill(name), msg=name)
+        self.assertIn("Next skill: none", read_skill("dev-ship"))
+
+    def test_visual_contract_is_shared(self) -> None:
+        fidelity = (
+            SKILLS / "dev-qa-guided-review" / "references" / "design-fidelity.md"
+        ).read_text(encoding="utf-8")
+        self.assertIn("FIXED", fidelity)
+        self.assertIn("ABSOLUTE", fidelity)
+        self.assertIn("complex-fill", fidelity)
+        self.assertIn("Visual contract", read_skill("dev-specify"))
+        self.assertIn("fixed-size", read_skill("dev-qa-guided-review"))
+
+    def test_agents_stop_before_ship(self) -> None:
+        feature = read_skill("dev-feature-agent")
+        bug = read_skill("dev-bug-agent")
+        for text in (feature, bug):
+            self.assertIn("mode: agent", text)
+            self.assertIn("stop before", text.lower())
+            self.assertIn("Next skill: \\`dev-ship\\`", text)
+            self.assertIn("only** question", text)
+        self.assertIn("Do **not** use `dev-specify`", bug)
+        self.assertNotIn("dev-specify` →", bug)
+        self.assertIn("task-failure", feature)
+        delegate = read_skill("dev-cycle").split("## Delegate", 1)[1].split("## Close", 1)[0]
+        self.assertNotIn("dev-feature-agent", delegate)
+        self.assertNotIn("dev-bug-agent", delegate)
+
+    def test_agent_stops_reset_mode_and_log_decisions(self) -> None:
+        policy = (SKILLS / "dev-shared" / "references" / "agent-mode.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("## Run log", policy)
+        self.assertIn("Every stop (blockage or pre-ship) writes `mode: manual`", policy)
+        for name in ("dev-feature-agent", "dev-bug-agent"):
+            text = read_skill(name)
+            self.assertIn("Write `mode: manual` and the run log", text, msg=name)
+            self.assertIn("Write `mode: manual`, the run log, and the Gate S briefing", text, msg=name)
+            self.assertIn("A failing result is a blockage, not a ship-ready stop", text, msg=name)
+        self.assertIn("Before any stop, run `validate_state.py`", policy)
+
+    def test_ship_gates_are_deterministic_and_single_sourced(self) -> None:
+        ship = read_skill("dev-ship")
+        for script in ("validate_state.py", "validate_feature.py", "validate_bug.py", "validate_readiness.py"):
+            self.assertIn(script, ship, msg=script)
+        self.assertIn("single definition of **ship-ready**", ship)
+        self.assertIn(
+            'validate_feature.py" .dev/features/<slug>/validation.md --require-pass',
+            ship,
+        )
+        self.assertIn('validate_bug.py" .dev/bugs/<slug> --require-pass', ship)
+        for name in ("dev-feature-cycle", "dev-bug-cycle", "dev-feature-agent", "dev-bug-agent",
+                     "dev-fix-reviews", "dev-qa-guided-review"):
+            self.assertIn("dev-ship/SKILL.md#preconditions", read_skill(name), msg=name)
+        evidence = (SKILLS / "dev-shared" / "references" / "evidence-contract.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("### Readiness receipt", evidence)
+        self.assertIn("MR reviewed:", evidence)
+        self.assertIn("A review run outside a flow (no `STATE.md`, or `flow: none`) writes nothing", evidence)
+        for name in ("dev-mr-guided-review", "dev-qa-guided-review"):
+            self.assertIn("whatever the verdict", read_skill(name), msg=name)
+
+    def test_every_stop_names_its_next_skill(self) -> None:
+        verify = read_skill("dev-verify-feature")
+        self.assertIn("`Next skill: \\`dev-verify-feature\\`` when it is INCOMPLETE", verify)
+        self.assertIn("`Next skill: none` when it is the third FAIL", verify)
+        self.assertIn(
+            "`Next skill: \\`dev-debug\\`` when there is no demonstrable cause",
+            read_skill("dev-debug"),
+        )
+        self.assertIn("no screen", read_skill("dev-specify"))
+        self.assertIn("no screen", read_skill("dev-feature-intake"))
+        self.assertIn("no screen", read_skill("dev-feature-cycle"))
+        self.assertIn("`Next skill: \\`dev-verify-bug\\`` when INCOMPLETE", read_skill("dev-verify-bug"))
+        fix = read_skill("dev-fix-bug")
+        self.assertIn("`Next skill: \\`dev-debug\\`` after the third failed attempt", fix)
+        self.assertIn("`Next skill: \\`dev-feature-cycle\\`` when the patch would change product behavior", fix)
+        self.assertNotIn("Next skill: none", read_skill("dev-reproduce-bug"))
+        policy = (SKILLS / "dev-shared" / "references" / "agent-mode.md").read_text(encoding="utf-8")
+        self.assertIn("| Blockage | Resume skill |", policy)
+        self.assertIn("Verification `INCOMPLETE`", policy)
+
+    def test_stale_agent_mode_does_not_skip_manual_gates(self) -> None:
+        shared = read_skill("dev-shared")
+        self.assertIn("loaded this skill in the current conversation", shared)
+        self.assertIn("runs in manual mode even if `STATE.md` still says `mode: agent`", shared)
+        gates = (SKILLS / "dev-shared" / "references" / "gates.md").read_text(encoding="utf-8")
+        self.assertIn("A skill the user invoked directly asks its gates", gates)
+
+    def test_artifact_steps_surface_output_in_chat(self) -> None:
+        for name in ("dev-verify-feature", "dev-verify-bug"):
+            self.assertIn("`## Completeness` table as written", read_skill(name), msg=name)
+        self.assertIn("commit SHA", read_skill("dev-execute"))
+        self.assertIn("the path of `reviews/round-NNN.md`", read_skill("dev-fix-reviews"))
+
+    def test_ship_ready_requires_clean_reviews(self) -> None:
+        ship = read_skill("dev-ship")
+        self.assertIn("verdict `APPROVE`", ship)
+        self.assertIn("`not-checked`", ship)
+        self.assertNotIn("reviews without BLOCK", ship)
+        for name in ("dev-feature-agent", "dev-bug-agent"):
+            self.assertIn("Ship-ready", read_skill(name), msg=name)
+        template = (
+            SKILLS / "dev-qa-guided-review" / "references" / "report-template.md"
+        ).read_text(encoding="utf-8")
+        self.assertIn("cannot contain a `gap` or `not-checked` row", template)
+        mr = read_skill("dev-mr-guided-review")
+        self.assertIn("`APPROVE`, `ADJUST`, `BLOCK`, or `INCOMPLETE`", mr)
+        self.assertIn(
+            "`Next skill: \\`dev-mr-guided-review\\`` when the verdict is `INCOMPLETE`",
+            mr,
+        )
+        self.assertNotIn("blockers or approve", mr)
+        self.assertIn("Agent mode starts after `decision: proceed`", mr)
+
+    def test_intake_gap_round_has_its_own_form(self) -> None:
+        gates = (SKILLS / "dev-shared" / "references" / "gates.md").read_text(encoding="utf-8")
+        self.assertIn("`gate-intake-gaps`", gates)
+        self.assertIn("## Intake gap round", gates)
+        self.assertIn("except the intake gap round", gates)
+        self.assertIn("Do not collapse the gaps into a single choice", gates)
+        for name in ("dev-feature-intake", "dev-bug-intake"):
+            text = read_skill(name)
+            self.assertIn("gate-intake-gaps", text, msg=name)
+            self.assertIn("not by a separate Gate A round", text, msg=name)
+
+    def test_agent_reviews_do_not_require_human_confirmation(self) -> None:
+        qa = read_skill("dev-qa-guided-review")
+        self.assertIn("### Agent-mode substitutions", qa)
+        self.assertIn("record `decision: confirm-report`", qa)
+        self.assertIn("Manual mode asks", qa)
+
+        fixes = read_skill("dev-fix-reviews")
+        self.assertIn("**Manual mode:**", fixes)
+        self.assertIn("**Agent mode:**", fixes)
+        self.assertIn("do not ask the user to confirm or paste them", fixes)
+        self.assertIn("`Next skill: \\`dev-mr-guided-review\\``", fixes)
+        self.assertIn("`Next skill: \\`dev-qa-guided-review\\``", fixes)
+        self.assertIn("third `INCOMPLETE` in a row", fixes)
+        self.assertIn("Agent mode stops", fixes)
 
 
 if __name__ == "__main__":
