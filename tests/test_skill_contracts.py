@@ -166,6 +166,11 @@ class SkillContractsTest(unittest.TestCase):
         )
         for name in gated:
             self.assertIn("Gate briefing", read_skill(name), msg=name)
+        gates = (SKILLS / "dev-shared" / "references" / "gates.md").read_text(encoding="utf-8")
+        self.assertIn("The card does not show the briefing", gates)
+        qa = read_skill("dev-qa-guided-review")
+        self.assertIn("names every finding the card will ask about", qa)
+        self.assertIn("do not open the gate", qa)
         for name in manual:
             self.assertIn("Next skill:", read_skill(name), msg=name)
         self.assertIn("Next skill: none", read_skill("dev-ship"))

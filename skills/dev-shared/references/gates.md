@@ -2,7 +2,7 @@
 
 At **every** checkpoint in **manual** mode (`mode` absent or `mode: manual`), except the intake gap round:
 
-1. Write the **Gate briefing** in **chat** (Markdown), in the same message, **before** the question. Clickable URLs. Inventory, IDs, risks, and evidence stay **here**.
+1. Write the **Gate briefing** as the visible chat prose **above** the question card, in the same turn, **before** calling the question tool. The card does not show the briefing. Clickable URLs. Inventory, IDs, risks, and evidence stay **here**. Exploration, a file name, or “Asking questions” is not a briefing. Do not open the question until that prose is in the message.
 2. Then ask **one** question. If the host has a structured question tool, use it (`allow_multiple: false`). The `prompt` is **only** the one-line placeholder. Labels are short. Otherwise list numbered labels after the briefing already in chat.
 3. Do not copy inventory, hyperlinks, `fileKey`, `node-id`, or Jira keys into the prompt or labels.
 4. Do not re-ask a fact already recorded under `## Decisions` in the intake.
@@ -14,7 +14,7 @@ Required in chat before the question. Omit nothing because the file exists on di
 
 - **Confirming:** what this gate decides
 - **Artifact:** repo path (`.dev/features/<slug>/…` or `.dev/bugs/<slug>/…`), or `none` when this gate has no file yet
-- **Summary:** a few lines of what that artifact or the evidence actually says. “See the file” is not a summary
+- **Summary:** a few lines of what that artifact or the evidence actually says. “See the file” is not a summary. A findings gate names every finding in one line (what was checked, the evidence, and what confirming it authorizes). A card titled only “Confirm findings?” with no finding named above it is not a briefing.
 - **Confirm:** what a positive answer authorizes, and which skill that leads to
 - **Reject:** which skill a negative answer returns to
 

@@ -100,7 +100,7 @@ Manual mode: do not advance to Step 1 until the answer. Agent mode uses the Gate
 
 Do not start Step 2 if (a) and (b) are missing, unless `integration-only`. A missing dimension degrades only with `na-a` / `na-b` (manual option or agent decision). Inventory with only a spec-sheet (no screen) is **not** enough for (b): `fix-frames` or (b) incomplete — do not treat spec as screen.
 
-**Gate C — options** (findings draft only in chat):
+**Gate C — options** (the findings draft is the chat prose above the card, one line per finding; the card title stays the placeholder):
 
 - `confirm-report` “Confirm findings and emit the report”
 - `wrong-screen` “Fix the screen frame”
@@ -163,7 +163,7 @@ Read `integration-heuristics.md` and `design-fidelity.md` again for (b). No new 
 
 **(c) Integration.** Contracts, breaking changes, callers outside the diff, failed CI, flags. Failure scenario + blast radius.
 
-**⛔ Gate C** — Gate briefing in chat (criteria, mismatches with **screen** frame links, risks, unknowns, summary). Manual mode asks with prompt verbatim `Gate C — Confirm findings?`. Agent mode records `confirm-report` plus confirmed screens and continues. Without that decision + confirmed screens, (b) is not OK in the report.
+**⛔ Gate C** — Before the question tool, the chat message names every finding the card will ask about. One line each: criterion or surface, screen `node-id` (or N/A), mismatch, and which option it supports. Then risks and unknowns. Artifact is `none` until the report is emitted in chat. If there is no finding to name, do not open the gate; say what is missing. Manual mode then asks with prompt verbatim `Gate C — Confirm findings?`. Agent mode records `confirm-report` plus confirmed screens and continues. Without that decision + confirmed screens, (b) is not OK in the report.
 
 ## STEP 3 — Report
 
