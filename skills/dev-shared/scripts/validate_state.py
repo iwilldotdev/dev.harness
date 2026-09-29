@@ -10,6 +10,7 @@ from pathlib import Path
 
 REQUIRED = ("flow:", "gate:", "branch:", "next:", "artifact:", "merge-base:")
 FLOW_OK = {"feature", "bug", "none"}
+MODE_OK = {"manual", "agent"}
 PLACEHOLDERS = ("TODO", "TBD", "lorem", "xxx")
 
 
@@ -28,6 +29,12 @@ def validate(path: Path) -> list[str]:
             flow = line.split(":", 1)[1].strip().lower()
     if flow and flow not in FLOW_OK:
         errors.append(f"invalid flow {flow!r}")
+    mode = None
+    for line in text.splitlines():
+        if line.lower().startswith("mode:"):
+            mode = line.split(":", 1)[1].strip().lower()
+    if mode is not None and mode not in MODE_OK:
+        errors.append(f"invalid mode {mode!r}")
     for token in PLACEHOLDERS:
         if re.search(rf"\b{token}\b", text, re.I):
             errors.append(f"placeholder {token}")

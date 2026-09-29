@@ -100,7 +100,7 @@ Use only after announcing at Gate B, and only if a remote link/URL points to a p
 
 - `Read`, `Grep`, `Glob` in the workspace working tree.
 - Git: `remote get-url`, `branch --show-current`, `rev-parse --show-toplevel`, `rev-parse --abbrev-ref @{upstream}`, `symbolic-ref refs/remotes/origin/HEAD`, `merge-base`, `diff <base>...<head>`, `log <base>..HEAD --oneline`.
-- Host: a structured question tool at every Gate A/B/C when it exists (not a `dev.mcp` tool).
+- Host: a structured question tool at every Gate A/B/C when it exists (not a `dev.mcp` tool). Manual mode only; in `mode: agent`, follow the agent-mode policy instead of asking.
 - `python3 "$SKILL_DIR/scripts/extract_refs.py"`.
 
 Forbidden: `glab` as the primary path; any MCP that is not `dev.mcp` / a host-prefixed `dev.mcp`.

@@ -15,6 +15,9 @@ ORIGIN = re.compile(r"(jira|gate|figma|intake|field|description|ac\b)", re.I)
 SCOPE = re.compile(r"(out of scope|fora de escopo|scope)", re.I)
 RISK = re.compile(r"(risk|risco)", re.I)
 OUTCOME = re.compile(r"(outcome|expected|então|then the)", re.I)
+UI_REF = re.compile(r"(figma|node-id)", re.I)
+VISUAL = re.compile(r"^## Visual contract\b[^\n]*\n(.*?)(?=^## |\Z)", re.M | re.S)
+NODE_ID = re.compile(r"\b\d+[:-]\d+\b")
 
 
 def validate(path: Path) -> list[str]:
@@ -37,6 +40,12 @@ def validate(path: Path) -> list[str]:
         errors.append("spec must declare risk")
     if not OUTCOME.search(text):
         errors.append("spec must declare expected outcomes")
+    if UI_REF.search(text):
+        visual = VISUAL.search(text)
+        if not visual:
+            errors.append("UI spec that cites Figma must include Visual contract")
+        elif not NODE_ID.search(visual.group(1)):
+            errors.append("Visual contract must cite the screen node-id")
     for token in PLACEHOLDERS:
         if token.lower() in text.lower():
             errors.append(f"placeholder {token}")

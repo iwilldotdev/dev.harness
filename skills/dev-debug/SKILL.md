@@ -24,6 +24,12 @@ Temporary instrumentation only in scratch/worktree; the real tree matches baseli
 
 ## Modes
 
-**`bug`:** write `investigation.md` + `hypothesis.md`. **⛔ Gate B-C** prompt `Gate B-C — Confirm root cause`. No cause, do not advance.
+**`bug`:** write `investigation.md` + `hypothesis.md`. **⛔ Gate B-C** — Write the Gate briefing in chat before the question (confirming, artifact path, summary of cause and falsification, confirm vs reject). Prompt verbatim `Gate B-C — Confirm root cause`. No cause, do not advance. Do not re-ask facts already in intake `## Decisions`.
 
-**`task-failure`:** diagnosis on the task receipt. **⛔ Gate F-X** prompt `Gate F-X — Confirm task diagnosis`. Return to the same task. Do not create `.dev/bugs`. Do not switch to a Bug cycle.
+**`task-failure`:** diagnosis on the task receipt. **⛔ Gate F-X** — Write the Gate briefing in chat before the question. Prompt verbatim `Gate F-X — Confirm task diagnosis`. Return to the same task. Do not create `.dev/bugs`. Do not switch to a Bug cycle.
+
+If `.dev/STATE.md` has `mode: agent`, do not ask. Follow [../dev-shared/references/agent-mode.md](../dev-shared/references/agent-mode.md): record the decision, or stop when there is no demonstrable cause. The orchestrator loads the next skill.
+
+## Close
+
+Manual: in bug mode, the last line is `Next skill: \`dev-fix-bug\`` when Gate B-C confirmed a cause, and `Next skill: \`dev-debug\`` when there is no demonstrable cause. In task-failure mode, the last line is `Next skill: \`dev-execute\`` for the same task. Agent mode does not emit this line.

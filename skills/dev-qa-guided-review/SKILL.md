@@ -19,14 +19,16 @@ compatibility: python3, dev.mcp
 
 Second QA layer over a **GitLab MR** or, if the feature has no MR, the **active branch** (and other branches/projects only if the user names them). Crosses three dimensions with evidence or declares the dimension insufficient. Complements `dev-mr-guided-review`; does **not** redo nits, correctness, or architecture. Load [../dev-shared/SKILL.md](../dev-shared/SKILL.md) at Step 0.
 
-Report in English, chat-only. Read-only. Never write `QA_REVIEW.md` into the repo.
+Report in English, chat-only. MCP read-only. Never write `QA_REVIEW.md` into the repo. The only file this skill writes is the readiness receipt, and only inside an active flow.
 
 ```
 Step 0 Bind MCP → Gate A Target → Step 1 Extract → Step 1.5 Figma pointers
   → Gate B Context → Step 2 Cross-analysis → Gate C Findings → Step 3 Report
 ```
 
-Each gate **stops**. Gate body (targets, nodes, URLs, hyperlinks) **always in chat**, so links stay clickable. The question prompt is only the short placeholder below. Without a structured question tool: inventory already in chat; then numbered labels only. Do not advance because it “looks sufficient”. When unsure, the user points — never choose alone.
+Each gate **stops** in manual mode. Write the Gate briefing (confirming, artifact path or `none`, summary, confirm vs reject) in chat before the question, so links stay clickable. The question prompt is only the short placeholder below. Without a structured question tool: briefing already in chat; then numbered labels only. Do not advance because it “looks sufficient”. When unsure, the user points — never choose alone. Do not re-ask facts already in intake `## Decisions`.
+
+If `.dev/STATE.md` has `mode: agent`, do not ask. Follow [../dev-shared/references/agent-mode.md](../dev-shared/references/agent-mode.md): decide from decisions and surrounding evidence, record it, and let the orchestrator continue. Stop before `dev-ship`.
 
 ## Load this skill
 
@@ -35,7 +37,7 @@ Each gate **stops**. Gate body (targets, nodes, URLs, hyperlinks) **always in ch
 - Step 0: read [references/mcp-allowlist.md](references/mcp-allowlist.md) in full.
 - Step 1.5 and track (b): read [references/design-fidelity.md](references/design-fidelity.md) in full.
 - Step 2: read [references/integration-heuristics.md](references/integration-heuristics.md) in full.
-- Step 3: follow [references/report-template.md](references/report-template.md) exactly.
+- Step 3: follow [references/report-template.md](references/report-template.md) exactly. Section 10 only if the user asks for a paste draft.
 - Parser: `python3 "$SKILL_DIR/scripts/extract_refs.py"` (no network). If missing, stop.
 
 ## Hard rules
@@ -48,15 +50,25 @@ Each gate **stops**. Gate body (targets, nodes, URLs, hyperlinks) **always in ch
 6. **Outside MCP:** `Read` / `Grep` / `Glob`; `git remote`, `git branch`, `git merge-base`, `git diff <base>...<head>`. Do not use `glab` as the primary path.
 7. **Figma quota.** Prefer `figma_get_design_context` with `nodeIds`. Never `figma_get_file` without `depth`/`ids`.
 8. **Pixel-perfect on (b).** A spec-sheet does not replace a screen. Do not claim (b) OK without a screenshot of a **screen** frame. Do not close a visual GAP with invented UI (generic Modal, copy from another i18n key, “equivalent flow”). Detail in `design-fidelity.md`.
-9. **When unsure, ask.** Several MRs, 0 MR, several remotes/repos, spec vs screen frame, degrading a dimension: stop and ask. Do not invent the target.
+9. **When unsure, ask (manual).** Several MRs, 0 MR, several remotes/repos, spec vs screen frame, degrading a dimension: stop and ask. Do not invent the target. In `mode: agent`, do not ask: decide from intake `## Decisions` and surrounding evidence, or stop and explain.
 
 ## Gates — chat then ask
 
-At **every** checkpoint:
+At **every manual** checkpoint:
 
-1. Write the body in **chat** (Markdown). Include clickable URLs (MR, Jira, Figma with `node-id`, screenshots). Spec vs screen nodes, `projectId`, IID, branch, merge-base, criteria, and mismatches stay **here**.
+1. Write the **Gate briefing** in **chat** (Markdown). Include clickable URLs (MR, Jira, Figma with `node-id`, screenshots). Spec vs screen nodes, `projectId`, IID, branch, merge-base, criteria, and mismatches stay **here**, including artifact path and a short summary.
 2. Then ask. If the host has a structured question tool, use it (`allow_multiple: false`). The `prompt` is **only** the gate placeholder — one line, no IDs, no URLs, no node list. Labels are the short phrases below.
 3. **Do not** copy inventory, hyperlinks, `fileKey`, `node-id`, or Jira keys into the prompt or labels.
+
+### Agent-mode substitutions
+
+With `.dev/STATE.md` `mode: agent`, no QA gate asks a question:
+
+- **Gate A:** one unambiguous MR or a clear branch/merge-base records `decision: confirm-target` in chat and `gate: A` in `STATE.md`. An ambiguity not resolved by intake `## Decisions` stops the cycle and names `dev-qa-guided-review` as the manual resume.
+- **Gate B:** record `decision: proceed`, `na-a`, `na-b`, or `integration-only` with one sentence of evidence in chat and `gate: B` in `STATE.md`. N/A requires evidence that the dimension has no surface; it is never inferred silently.
+- **Gate C:** record `decision: confirm-report`, the confirmed **screen** `node-id`s (or the evidenced N/A), and `gate: C` in `STATE.md`. This recorded decision replaces the structured option.
+
+QA reports remain chat-only, so these decisions are recorded in chat + `STATE.md`, not in a repository report artifact. The readiness receipt is the only review file either review may write. A missing screen, unresolved target, or unsupported N/A stops with an explanation; it does not open another question round.
 
 Placeholders (verbatim):
 
@@ -75,7 +87,7 @@ Placeholders (verbatim):
 - Several projects: one option per short detected name + `multi-project`.
 - Ambiguous base (`gate-a-base`): one option per short ref (`origin/main`, `upstream`, …). SHA and command stay in chat.
 
-Do not advance to Step 1 until the answer.
+Manual mode: do not advance to Step 1 until the answer. Agent mode uses the Gate A substitution above.
 
 **Gate B — options** (omit those that do not apply; spec vs screen inventory only in chat):
 
@@ -86,7 +98,7 @@ Do not advance to Step 1 until the answer.
 - `fix-frames` “Fix screen frames”
 - `stop` “Stop”
 
-Do not start Step 2 if (a) and (b) are missing, unless `integration-only`. A missing dimension degrades only with `na-a` / `na-b`. Inventory with only a spec-sheet (no screen) is **not** enough for (b): `fix-frames` or (b) incomplete — do not treat spec as screen.
+Do not start Step 2 if (a) and (b) are missing, unless `integration-only`. A missing dimension degrades only with `na-a` / `na-b` (manual option or agent decision). Inventory with only a spec-sheet (no screen) is **not** enough for (b): `fix-frames` or (b) incomplete — do not treat spec as screen.
 
 **Gate C — options** (findings draft only in chat):
 
@@ -95,7 +107,7 @@ Do not start Step 2 if (a) and (b) are missing, unless `integration-only`. A mis
 - `false-positive` “There is a false positive / poorly extracted AC”
 - `block-b-ok` “Do not confirm screens; (b) cannot be OK”
 
-Without confirmation of **screen** `node-id`s (in chat + option), it is forbidden to emit a canonical report with (b) OK.
+Without confirmation of **screen** `node-id`s (in chat + manual option or recorded agent decision), it is forbidden to emit a canonical report with (b) OK.
 
 ## STEP 0 — Bind MCP and target
 
@@ -120,7 +132,7 @@ Without confirmation of **screen** `node-id`s (in chat + option), it is forbidde
 
 Do not call `gitlab_get_merge_request` with diffs before Gate A.
 
-**⛔ Gate A** — body in chat (server name, `projectId`, IID or “no MR”, branch, merge-base, title, links). Then ask with prompt verbatim `Gate A — Confirm target`.
+**⛔ Gate A** — Gate briefing in chat (server name, `projectId`, IID or “no MR”, branch, merge-base, title, links, summary). Manual mode asks with prompt verbatim `Gate A — Confirm target`. Agent mode applies the Gate A substitution and continues or stops.
 
 ## STEP 1 — Extract context
 
@@ -139,7 +151,7 @@ With the target confirmed:
 
 Follow [references/design-fidelity.md](references/design-fidelity.md). Gate B inventory must separate **spec** and **screen**. One hop of “see this screen” + siblings in the section. Unresolved pointer → (b) incomplete.
 
-**⛔ Gate B** — checklist in chat (diffs; Jira; spec vs screen with Figma URLs; Confluence). Then ask with prompt verbatim `Gate B — Enough context?`.
+**⛔ Gate B** — Gate briefing in chat (diffs; Jira; spec vs screen with Figma URLs; Confluence; summary). Manual mode asks with prompt verbatim `Gate B — Enough context?`. Agent mode records the Gate B decision and continues or stops.
 
 ## STEP 2 — Cross-analysis
 
@@ -147,15 +159,17 @@ Read `integration-heuristics.md` and `design-fidelity.md` again for (b). No new 
 
 **(a) Business rules.** Jira criteria × diff/test (`path:line`) or `MISSING`.
 
-**(b) Pixel-perfect.** Only frames classified `screen`. Minimum method per surface: screen screenshot + code (Tailwind/tokens/copy/states). Mismatch: layout, typography, overlay, asset, spacing, token, state, copy, missing. “Looks like the DS” ≠ OK. Without a confirmed screen, do not mark OK.
+**(b) Pixel-perfect.** Only frames classified `screen`. Compare the visual contract: screen screenshot plus `visual`, `layout`, `fills`, `strokes`, and `text`. Mismatch: layout, typography, overlay, asset, spacing, token, state, copy, missing, `fixed-size`, `absolute`, `effect`, `complex-fill`, `stroke`, `opacity`. “Looks like the DS” ≠ OK. Without a confirmed screen, do not mark OK.
 
 **(c) Integration.** Contracts, breaking changes, callers outside the diff, failed CI, flags. Failure scenario + blast radius.
 
-**⛔ Gate C** — draft in chat (criteria, mismatches with **screen** frame links, risks, unknowns). Then ask with prompt verbatim `Gate C — Confirm findings?`. Without `confirm-report` + confirmed screens, (b) is not OK in the report.
+**⛔ Gate C** — Gate briefing in chat (criteria, mismatches with **screen** frame links, risks, unknowns, summary). Manual mode asks with prompt verbatim `Gate C — Confirm findings?`. Agent mode records `confirm-report` plus confirmed screens and continues. Without that decision + confirmed screens, (b) is not OK in the report.
 
 ## STEP 3 — Report
 
-Fill `report-template.md` in chat. No write tool. Section 9 only if requested. Verdict: `APPROVE` / `ADJUST` / `BLOCK` / `INCOMPLETE`.
+Fill `report-template.md` in chat, including section 3 Completeness. Section 10 only if requested. Verdict: `APPROVE` / `ADJUST` / `BLOCK` / `INCOMPLETE`.
+
+The full report stays in chat. Never write `QA_REVIEW.md`. Inside an active flow, rewrite the three `QA` lines of the readiness receipt after every run, whatever the verdict, as defined in [../dev-shared/references/evidence-contract.md](../dev-shared/references/evidence-contract.md#readiness-receipt). Outside a flow, write nothing.
 
 Branch mode: section 1 says **MR: none (branch review)** + merge-base; do not invent an IID.
 
@@ -167,6 +181,10 @@ This skill does not implement. If the user asks to fix GAPs:
 - Marketing/onboarding frame: that layout, or ask product.
 - GAP (a)/(c): evidence already cited; no extra refactor.
 - Still forbidden to post to MR/Jira.
+
+## Close
+
+Manual: the last line of the chat message is `Next skill: \`dev-fix-reviews\`` when confirmed gaps remain; `Next skill: \`dev-ship\`` when the [`dev-ship` preconditions](../dev-ship/SKILL.md#preconditions) hold (both reviews `APPROVE` with no `gap` or `not-checked` row, and `validation.md` PASS); `Next skill: \`dev-qa-guided-review\`` when the verdict is `INCOMPLETE` only for a missing screen, target, or access, to re-run once it is provided. Agent mode does not emit this line. The agent orchestrator stops before loading `dev-ship`.
 
 ## Examples
 

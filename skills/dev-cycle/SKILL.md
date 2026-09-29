@@ -24,9 +24,9 @@ Load [../dev-shared/SKILL.md](../dev-shared/SKILL.md). Does **not** plan, diagno
 
 ## ⛔ Gate 0
 
-Only when the class is ambiguous. Inventory and evidence **in chat**. Question prompt verbatim: `Gate 0 — Confirm flow`. Short labels (`feature`, `bug`). `allow_multiple: false`.
+Only when the class is ambiguous. Inventory and evidence **in chat**, as a Gate briefing (confirming, artifact `none`, summary, confirm vs reject). Question prompt verbatim: `Gate 0 — Confirm flow`. Short labels (`feature`, `bug`). `allow_multiple: false`. Do not re-ask a fact already obvious from the user text.
 
-Invoking `dev-feature-cycle` or `dev-bug-cycle` **directly** skips this gate.
+Invoking `dev-feature-cycle` or `dev-bug-cycle` **directly** skips this gate. Agentic modes are not a Gate 0 outcome: the user invokes `dev-feature-agent` or `dev-bug-agent` directly.
 
 ## Delegate
 
@@ -36,3 +36,7 @@ Invoking `dev-feature-cycle` or `dev-bug-cycle` **directly** skips this gate.
 Do not inherit write tools. Do not run specify/execute/debug here.
 
 The router only “finishes” a session when the delegated cycle ends **and** `validate_state.py` passes on the target project’s `.dev/STATE.md`.
+
+## Close
+
+Manual: the last line of the chat message is `Next skill: \`dev-feature-cycle\`` when the class is feature, or `Next skill: \`dev-bug-cycle\`` when the class is bug.

@@ -34,9 +34,10 @@ Target = visual parity with the **screen/component** frame, not “there is a Mo
 
 Minimum method **per UI surface in the diff** (and per spec-cited state: hover/open/empty/disabled):
 
-1. Screenshot of the **screen/component node** (`figma_get_screenshot` or URL in `figma_get_design_context`).
-2. Read the component in the working tree: project Tailwind classes, tokens, literal copy, hierarchy, CTA, overlay, assets.
-3. Reportable mismatch checklist: position, size, radius, overlay, typography (the project’s **custom** scale — token/config docs if they exist; do not assume a default scale), literal copy, hierarchy, CTA, background asset.
+1. Screenshot of the **screen/component node** (`figma_get_screenshot` or URL in `figma_get_design_context`) for the overall picture.
+2. Numbers come from that node’s `nodes[]` (`visual`, `layout`, `fills`, `strokes`, `text`), not from the screenshot alone.
+3. Read the component in the working tree: project Tailwind classes, tokens, literal copy, hierarchy, CTA, overlay, assets.
+4. Reportable mismatch checklist: position, size, radius, overlay, typography (the project’s **custom** scale — token/config docs if they exist; do not assume a default scale), literal copy, hierarchy, CTA, background asset, plus the visual-contract types below.
 
 Rules:
 
@@ -44,8 +45,31 @@ Rules:
 - A spec-sheet screenshot does **not** count as (b) evidence.
 - (b) `OK` only if every visible diff surface has a compared **screen** frame (Gate C must confirm those `node-id`s).
 - No pixel-diff engine in this version. An app browser is optional; Figma × code is required.
-- Figma variables 403 / quota / cropped frame → declare **unknown** in section 8; do **not** mark (b) OK.
+- Figma variables 403 / quota / cropped frame, a `warnings` entry, or a design-context payload with `truncated` / `childrenTruncated` → declare **unknown** in the report’s Unknowns section; do **not** mark (b) OK. `truncation.hint` says to pass `depth` or a child `node-id`. A node with `childrenTruncated` can be fetched on its own `node-id` to close that unknown. A `warnings` entry means the nodes that did return are still usable, and the failed part stays unknown.
 - Do not claim visual fidelity without a screen-frame screenshot. Conversely: **do not close a visual GAP without that frame**.
+
+## Visual contract
+
+Build one contract per **screen** node (and per cited state). Specify, design, execute, verify, and review all use this same list. A spec-sheet does not produce a visual contract.
+
+| Fact | Where it lives | How to treat it |
+| --- | --- | --- |
+| Visibility / mask | node `visible: false`, `isMask: true`, `maskType` (`ALPHA`, `VECTOR`, `LUMINANCE`); `visible: false` inside a paint of `fills` / `strokes` or an effect of `visual.effects` | A hidden node and its whole subtree are not rendered; a hidden paint or effect is not rendered either. Do not implement them. A mask clips the siblings above it; it is not visible content. `ALPHA` clips by alpha, `VECTOR` by the vector outline, and `LUMINANCE` by luminance. Keep the operation; do not treat every mask as the same clip. |
+| Component | `component` (name, key, `set`), `componentProperties`, `styleNames` | Use that design-system component with those variant values, and the named text/color style. A raw value that differs from its named style is a `token` mismatch. |
+| Fixed size | `visual.sizing` `FIXED` plus `size` | Literal px, or the token when `visual.boundVariables` names one. Do not swap in a generic design-system size. `visual.rotation` is passed through as REST returns it; the REST docs do not state the unit, so confirm it against the screen screenshot before writing CSS (a quarter turn reads about `90` in degrees or about `1.57` in radians). With it set, `size` is the rotated bounding box, not the element’s own size: record the rotation and declare the intrinsic size unknown instead of copying the box. |
+| Hug / fill | `visual.sizing` `HUG` or `FILL`; `layout.layoutGrow`, `layout.layoutAlign`, min/max, `layoutWrap`, axis sizing | Hug content or fill the parent, including a child that grows or stretches. Do not freeze a hug node at the screenshot’s pixel width. |
+| Absolute position | `visual.positioning` `ABSOLUTE`, `position`, `visual.constraints` | Positioned overlay, not an auto-layout sibling. |
+| Complex fill | `fills` (several paints, gradient stops, image) | Name each paint. Do not flatten to one solid token. |
+| Effect | `visual.effects` | Keep the REST effect, including blend, shadow-behind, blur type, offset, spread, and color. Do not flatten the color to CSS. |
+| Radius | `visual.radius` (one number or four corners) | Per-corner values stay per-corner. |
+| Stroke | `visual.stroke` weight, align, individual sides; `strokes` | Align (inside / center / outside) is part of the size. |
+| Opacity / blend | `visual.opacity`, `visual.blendMode` | A non-default blend is a complex style, not “slightly transparent”. |
+| Text | `text` family, `fontStyle`/`italic`, size, weight, line height (`lineHeightPx`, or `lineHeightPercentFontSize` with `lineHeightUnit`), letter spacing, `align`, `decoration`, `case`, `characters`, `characterStyleOverrides`, `styleOverrideTable` | Literal copy, including mixed styles inside one text node. Do not borrow another i18n key. A `FONT_SIZE_%` line height stays relative to the font size; do not freeze it to px. |
+| Text sizing | `text.autoResize`, `text.truncation`, `text.maxLines` | `NONE` is a fixed text box; `HEIGHT` grows vertically at fixed width; `WIDTH_AND_HEIGHT` hugs. `ENDING` truncates with an ellipsis after `maxLines`. |
+
+Mismatch types that must be available in review: `layout`, `typography`, `overlay`, `asset`, `spacing`, `token`, `state`, `copy`, `missing`, `fixed-size`, `absolute`, `effect`, `complex-fill`, `stroke`, `opacity`.
+
+Forbidden summary: “use a Modal/Drawer”, “close enough to the DS”, “equivalent flow”.
 
 ## Visual GAP follow-up (skill stays read-only)
 
