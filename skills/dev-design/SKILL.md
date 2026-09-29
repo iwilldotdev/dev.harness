@@ -21,7 +21,7 @@ Required for large, high-risk, or UI with a Figma screen. Skip only if F-A/F-B a
 - Spec vs **screen** inventory: fileKey, node-id, name, `spec|screen`, screenshot URL of the **screen**
 - Visual contract table, one row per screen region: fixed size, hug/fill, absolute position, complex fill, effect, radius, stroke, opacity, text/copy. Numbers come from `nodes[]` (`visual`, `layout`, `fills`, `strokes`, `text`) plus the screen screenshot. No screen frame: `Visual design: INCOMPLETE` (not silent N/A). A resolved screen always gets the table
 - Files, responsibilities, flows, failures, flags, contracts (`gitlab_get_repository_file` only if cited)
-- Tokens: `figma_get_variable_defs`; 403 → unknown, do not fake a design system. A `boundVariables` id is the token; a raw `FIXED` value stays literal
+- Tokens: do not call `figma_get_variable_defs`. Variable definitions are optional. A 403 or a missing variables payload is not unknown and is not `Visual design: INCOMPLETE`. Use the literal values on the node and the screenshot. A `boundVariables` id does not replace that literal
 - No placeholders (“add validation”, TBD)
 
 ```bash

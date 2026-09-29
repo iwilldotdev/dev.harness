@@ -18,6 +18,7 @@ This harness uses SemVer. Contract, gate, and artifact changes are recorded here
 - Feature verify returns to `dev-execute` on the first and second FAIL. The third FAIL escalates with `Next skill: none`.
 - Design and tasks are skipped only when the feature is small, normal risk, and has no screen. A screen, a large size, or high risk keeps `dev-design`, including when the spec adds that fact after an intake skip.
 - A findings gate names every finding in the chat above the question card. The card title stays the one-line placeholder. Gate C does not open when there is no finding to name.
+- Figma variables are optional. A 403 or a missing variables payload does not make design or QA `INCOMPLETE` and does not block dimension (b). Design context does not request variables unless `includeVariables` is true.
 - Reviews keep their full report in chat. Inside a flow, each writes only its verdict, open-row count, and reviewed commit to `reviews/readiness.md`.
 - Every validation verdict requires Completeness, and a missing verdict line fails. INCOMPLETE verification routes back to the verifier instead of to a fix.
 - Agents reset `mode: manual` when they stop and close with a run log of autonomous decisions and artifacts. A stale `mode: agent` from an interrupted run does not apply to a skill the user invokes directly. Every blockage names its resume skill.

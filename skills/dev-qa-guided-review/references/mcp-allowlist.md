@@ -76,10 +76,10 @@ Structured question tools (gates A/B/C) are **not** `dev.mcp` tools. Use them wh
 ### Figma (design fidelity)
 
 - `figma_whoami` — smoke for dimension (b).
-- `figma_get_design_context` — preferred (`nodeIds`, `includeScreenshot: true`, `includeVariables: true`). Required on the ticket node **and** each screen hop (Step 1.5).
+- `figma_get_design_context` — preferred (`nodeIds`, `includeScreenshot: true`). Do not pass `includeVariables`. Required on the ticket node **and** each screen hop (Step 1.5).
 - `figma_get_screenshot` — dimension (b) evidence is the **screen/component** screenshot, not the spec-sheet.
 - `figma_get_metadata` — required at Step 1.5 (pointers, hyperlinks, section siblings).
-- `figma_get_variable_defs`
+- `figma_get_variable_defs` — do not call. Variables are optional; a 403 does not block the review
 - `figma_get_comments`
 - `figma_download_assets` — only if the AC cites an icon/asset.
 - `figma_get_file` — last resort, always with `depth` and/or `ids`. Never the whole root document.

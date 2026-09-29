@@ -101,8 +101,7 @@ What this run does not cover. Examples:
 
 - CI job log (status/name only via `gitlab_get_pipeline_jobs`)
 - Official Figma MCP proprietary codegen
-- Figma variables 403 (`file_variables:read`) — (b) cannot be OK
-- Cropped frame / 429 quota
+- Cropped frame / 429 quota on screenshot or nodes
 - Acceptance criterion only in an unread attachment/image
 - Unidentified Jira AC field
 - Second feature repository not named by the user

@@ -171,6 +171,12 @@ class SkillContractsTest(unittest.TestCase):
         qa = read_skill("dev-qa-guided-review")
         self.assertIn("names every finding the card will ask about", qa)
         self.assertIn("do not open the gate", qa)
+        self.assertIn("do not set the verdict to INCOMPLETE", qa)
+        fidelity = (
+            SKILLS / "dev-qa-guided-review" / "references" / "design-fidelity.md"
+        ).read_text(encoding="utf-8")
+        self.assertIn("Variables are optional", fidelity)
+        self.assertNotIn("Figma variables 403 / quota", fidelity)
         for name in manual:
             self.assertIn("Next skill:", read_skill(name), msg=name)
         self.assertIn("Next skill: none", read_skill("dev-ship"))

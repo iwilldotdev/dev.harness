@@ -20,7 +20,7 @@ The parser (`extract_refs.py`) only sees URLs with `node-id` in the query, `node
 1. Run metadata XML/text + node copy through `extract_refs.py` (`figma_node_ids`).
 2. Treat as a pointer if copy contains: “see this screen”, “this screen”, “see frame”, “see the modal”, “visual reference”.
 3. Extract destinations from: hyperlinks, reactions, prototype connections, `prototypeNodeId`, `related` nodes, IDs in text.
-4. **One hop** required: fetch each destination with `figma_get_metadata` + `figma_get_design_context` (`nodeIds`, screenshot + variables). Do not scan the file.
+4. **One hop** required: fetch each destination with `figma_get_metadata` + `figma_get_design_context` (`nodeIds` and screenshot). Do not request variables. Do not scan the file.
 5. In the **same page section**, include visible siblings of the cited component (modal, drawer, empty, hover) — no second hop outside the section.
 6. Classify each node: `spec` or `screen`. Each `screen` enters the Gate B inventory as extra `fileKey` + `node-id`.
 7. A pointer that **does not resolve** → (b) incomplete. Do not continue (b) with the spec-sheet alone.
@@ -45,7 +45,8 @@ Rules:
 - A spec-sheet screenshot does **not** count as (b) evidence.
 - (b) `OK` only if every visible diff surface has a compared **screen** frame (Gate C must confirm those `node-id`s).
 - No pixel-diff engine in this version. An app browser is optional; Figma × code is required.
-- Figma variables 403 / quota / cropped frame, a `warnings` entry, or a design-context payload with `truncated` / `childrenTruncated` → declare **unknown** in the report’s Unknowns section; do **not** mark (b) OK. `truncation.hint` says to pass `depth` or a child `node-id`. A node with `childrenTruncated` can be fetched on its own `node-id` to close that unknown. A `warnings` entry means the nodes that did return are still usable, and the failed part stays unknown.
+- A cropped frame, a screenshot `warnings` entry, or a design-context payload with `truncated` / `childrenTruncated` → declare **unknown** in the report’s Unknowns section; do **not** mark (b) OK. `truncation.hint` says to pass `depth` or a child `node-id`. A node with `childrenTruncated` can be fetched on its own `node-id` to close that unknown.
+- Variables are optional. A variables 403, a variables quota error, or a `warnings` entry that only mentions variables is not unknown, not a gap, and not `INCOMPLETE`. Do not call `figma_get_variable_defs`. Fidelity uses the screen screenshot and the literal fields on the node (`size`, `fills`, `strokes`, `text`). A `visual.boundVariables` id does not replace those literals when variable definitions were not read.
 - Do not claim visual fidelity without a screen-frame screenshot. Conversely: **do not close a visual GAP without that frame**.
 
 ## Visual contract
@@ -56,7 +57,7 @@ Build one contract per **screen** node (and per cited state). Specify, design, e
 | --- | --- | --- |
 | Visibility / mask | node `visible: false`, `isMask: true`, `maskType` (`ALPHA`, `VECTOR`, `LUMINANCE`); `visible: false` inside a paint of `fills` / `strokes` or an effect of `visual.effects` | A hidden node and its whole subtree are not rendered; a hidden paint or effect is not rendered either. Do not implement them. A mask clips the siblings above it; it is not visible content. `ALPHA` clips by alpha, `VECTOR` by the vector outline, and `LUMINANCE` by luminance. Keep the operation; do not treat every mask as the same clip. |
 | Component | `component` (name, key, `set`), `componentProperties`, `styleNames` | Use that design-system component with those variant values, and the named text/color style. A raw value that differs from its named style is a `token` mismatch. |
-| Fixed size | `visual.sizing` `FIXED` plus `size` | Literal px, or the token when `visual.boundVariables` names one. Do not swap in a generic design-system size. `visual.rotation` is passed through as REST returns it; the REST docs do not state the unit, so confirm it against the screen screenshot before writing CSS (a quarter turn reads about `90` in degrees or about `1.57` in radians). With it set, `size` is the rotated bounding box, not the element’s own size: record the rotation and declare the intrinsic size unknown instead of copying the box. |
+| Fixed size | `visual.sizing` `FIXED` plus `size` | Literal px from `size`. Do not swap in a generic design-system size. Missing variable definitions do not make this unknown. `visual.rotation` is passed through as REST returns it; the REST docs do not state the unit, so confirm it against the screen screenshot before writing CSS (a quarter turn reads about `90` in degrees or about `1.57` in radians). With it set, `size` is the rotated bounding box, not the element’s own size: record the rotation and declare the intrinsic size unknown instead of copying the box. |
 | Hug / fill | `visual.sizing` `HUG` or `FILL`; `layout.layoutGrow`, `layout.layoutAlign`, min/max, `layoutWrap`, axis sizing | Hug content or fill the parent, including a child that grows or stretches. Do not freeze a hug node at the screenshot’s pixel width. |
 | Absolute position | `visual.positioning` `ABSOLUTE`, `position`, `visual.constraints` | Positioned overlay, not an auto-layout sibling. |
 | Complex fill | `fills` (several paints, gradient stops, image) | Name each paint. Do not flatten to one solid token. |

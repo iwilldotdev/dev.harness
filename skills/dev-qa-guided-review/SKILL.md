@@ -212,7 +212,7 @@ Manual: the last line of the chat message is `Next skill: \`dev-fix-reviews\`` w
 
 **Inventory is only a spec-sheet.** Step 1.5 incomplete. Do not degrade (b) to the spec.
 
-**Figma variables 403.** Unknown; (b) not OK.
+**Figma variables 403.** Optional. Continue with the screen screenshot and the literal fields on the node. Do not set (b) to unknown and do not set the verdict to INCOMPLETE.
 
 **Figma 429.** Only context+screenshot of nodes already in the inventory.
 
