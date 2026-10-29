@@ -14,7 +14,7 @@ compatibility: python3, dev.mcp
 
 Load [../dev-shared/SKILL.md](../dev-shared/SKILL.md). Read-only. No patch. A visual bug also loads [../dev-qa-guided-review/references/design-fidelity.md](../dev-qa-guided-review/references/design-fidelity.md).
 
-Bind and target follow the same target discovery as QA (parser, remote, MR/branch, no hardcode). Ambiguity goes to the gap round. Read the ticket, Figma, git, and recent commits before asking.
+Bind and target follow the same target discovery as QA (parser, remote, MR/branch, no hardcode). Ambiguity goes to the gap round. Read the ticket, Figma, git, and recent commits before asking. If the ticket is a child of DEV-8943, also read `.dev/features/dev-8943-gravacao-anotacoes/roadmap.md` and `jira-ship-comment.md`. The ship comment is part of every cycle of that epic.
 
 Extract: symptom, expected × actual, environment, frequency, first/last known state, severity, blast radius, recent regression (commits/pipelines). UI: **screen** frame and its visual contract only if the bug is visual.
 

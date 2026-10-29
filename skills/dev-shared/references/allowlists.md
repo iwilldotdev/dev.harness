@@ -36,7 +36,7 @@ Skills: `dev-cycle`, `dev-feature-cycle`, `dev-feature-agent`, `dev-bug-cycle`, 
 
 ## `dev-ship` (after Gate S)
 
-Narrow allowlist: `gitlab_save_merge_request`. Optional if the gate selects them: `jira_add_comment`, `jira_transition_issue`, `jira_create_remote_issue_link`. Never `gitlab_accept_merge_request`. Never force-push. Never remote `gitlab_add_commit`.
+Narrow allowlist: a normal `git push` of commits already made, and `gitlab_save_merge_request`. When the epic has `jira-ship-comment.md` and Gate S lists them: `jira_add_comment` from that file, then `jira_transition_issue` to Code Review. Optional if the gate selects it: `jira_create_remote_issue_link`. Never `gitlab_accept_merge_request`. Never force-push. Never remote `gitlab_add_commit`. For DEV-8943 the template is `.dev/features/dev-8943-gravacao-anotacoes/jira-ship-comment.md`.
 
 ## Outside MCP
 

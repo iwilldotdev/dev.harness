@@ -28,7 +28,7 @@ Do **not** use `dev-specify`, `dev-design`, `dev-tasks`, or `dev-execute`. If in
 6. `dev-verify-bug` — **separate** verifier, fresh context. Failure → `dev-debug` (hypothesis) or `dev-fix-bug` (patch), explicitly. Do not ask.
 7. `dev-mr-guided-review` → `dev-qa-guided-review`. Bug with no UI/AC: dimensions become N/A through the recorded decision, never silently skipped.
 8. Gaps with evidence → `dev-fix-reviews` (return `dev-debug` or `dev-fix-bug`), then verifier and both reviews. Max three rounds; then stop and explain.
-9. Ship-ready (every [`dev-ship` precondition](../dev-ship/SKILL.md#preconditions) command exits 0, including `validation.md` PASS and a current readiness receipt): **stop before** loading `dev-ship`. Write `mode: manual`, the run log, and the Gate S briefing. Do not call remote writes.
+9. Ship-ready (every [`dev-ship` precondition](../dev-ship/SKILL.md#preconditions) command exits 0, including `validation.md` PASS and a current readiness receipt): **stop before** loading `dev-ship`. Write `mode: manual`, the run log, and the Gate S briefing. The briefing includes the push, the MR, the comment from the epic `jira-ship-comment.md` when that file exists, and the move to Code Review. For DEV-8943 the file is `.dev/features/dev-8943-gravacao-anotacoes/jira-ship-comment.md`. Do not call remote writes.
 
 A blockage in [agent-mode.md](../dev-shared/references/agent-mode.md) stops the cycle. Write `mode: manual` and the run log. Explain the blockage. The last line names the manual skill that resumes. Do not open another question round.
 

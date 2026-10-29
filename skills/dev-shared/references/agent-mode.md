@@ -45,7 +45,7 @@ High-risk does not add a question. It keeps full rigor and stays marked for the 
 
 Ship-ready means every command in the [`dev-ship` preconditions](../../dev-ship/SKILL.md#preconditions) exits 0: `validate_state.py`, the flow validator on `validation.md` with `--require-pass`, and `validate_readiness.py`. Anything else loops through `dev-fix-reviews` or stops as a blockage.
 
-Do not load `dev-ship`. Write `mode: manual`. Stop with the run log, then the Gate S briefing (diff range, commits, target branch, Jira, MR title/body, exact remote actions, risk). The last line is `Next skill: \`dev-ship\``.
+Do not load `dev-ship`. Write `mode: manual`. Stop with the run log, then the Gate S briefing (diff range, commits, target branch, Jira, MR title/body, exact remote actions, risk). The remote actions include the push, the MR, the comment from the epic `jira-ship-comment.md` when that file exists, and the move to Code Review. For DEV-8943 that file is `.dev/features/dev-8943-gravacao-anotacoes/jira-ship-comment.md`. The last line is `Next skill: \`dev-ship\``.
 
 When the user invokes `dev-ship`, Gate S stays manual even if `mode` is still `agent`.
 

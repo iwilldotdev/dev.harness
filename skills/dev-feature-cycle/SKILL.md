@@ -26,7 +26,7 @@ Invoking this cycle directly **skips** Gate 0.
 6. Task failure → `dev-debug` in `task-failure` mode (Gate F-X) and return to the **same** task. Do not create `.dev/bugs`. Do not switch to a Bug cycle.
 7. `dev-verify-feature` — **fresh** context, author ≠ verifier. Max 3 execute↔verify loops. The third FAIL escalates to the user with `Next skill: none`.
 8. `dev-mr-guided-review` → `dev-qa-guided-review` (chat-only).
-9. Confirmed gaps → `dev-fix-reviews` (return `dev-execute`). Ship-ready ([`dev-ship` preconditions](../dev-ship/SKILL.md#preconditions)) → `dev-ship`. Any other verdict stays in review or `dev-fix-reviews`.
+9. Confirmed gaps → `dev-fix-reviews` (return `dev-execute`). Ship-ready ([`dev-ship` preconditions](../dev-ship/SKILL.md#preconditions)) → `dev-ship`. That ship pushes, updates the MR, posts the epic `jira-ship-comment.md` when the file exists, and moves the ticket to Code Review. For DEV-8943 the file is `.dev/features/dev-8943-gravacao-anotacoes/jira-ship-comment.md`, next to `roadmap.md`. Any other verdict stays in review or `dev-fix-reviews`.
 10. Finish only if `validate_state.py` passes.
 
 Main session: gates, hyperlinks, state. Workers: heavy execute/verify. Effort matches risk. Do not pin a model version slug.

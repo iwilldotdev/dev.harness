@@ -27,7 +27,7 @@ Set `.dev/STATE.md` `mode: agent` and `flow: feature` before the first step. Dir
 7. `dev-verify-feature` — **fresh** context, author ≠ verifier. Max 3 execute↔verify loops; then stop and explain.
 8. `dev-mr-guided-review` → `dev-qa-guided-review`. Phase 1 of the MR review proceeds without asking.
 9. Gaps with evidence → `dev-fix-reviews` (return `dev-execute`), then verifier and both reviews again. Max three rounds; then stop and explain.
-10. Ship-ready (every [`dev-ship` precondition](../dev-ship/SKILL.md#preconditions) command exits 0, including `validation.md` PASS and a current readiness receipt): **stop before** loading `dev-ship`. Write `mode: manual`, the run log, and the Gate S briefing. Do not call remote writes.
+10. Ship-ready (every [`dev-ship` precondition](../dev-ship/SKILL.md#preconditions) command exits 0, including `validation.md` PASS and a current readiness receipt): **stop before** loading `dev-ship`. Write `mode: manual`, the run log, and the Gate S briefing. The briefing includes the push, the MR, the comment from the epic `jira-ship-comment.md` when that file exists, and the move to Code Review. For DEV-8943 the file is `.dev/features/dev-8943-gravacao-anotacoes/jira-ship-comment.md`. Do not call remote writes.
 
 A blockage in [agent-mode.md](../dev-shared/references/agent-mode.md) stops the cycle. Write `mode: manual` and the run log. Explain the blockage. The last line names the manual skill that resumes. Do not open another question round.
 

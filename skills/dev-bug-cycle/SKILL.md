@@ -27,7 +27,7 @@ Do **not** use `dev-specify`, `dev-design`, `dev-tasks`, or `dev-execute`. If in
 5. `dev-fix-bug` → Gate B-D. One fixer. Three attempts = hard stop.
 6. `dev-verify-bug` — **separate** verifier, fresh context. Failure → `dev-debug` (hypothesis) or `dev-fix-bug` (patch), explicitly.
 7. `dev-mr-guided-review` → `dev-qa-guided-review`. Bug with no UI/AC: dimensions become N/A through QA gates, never silently skipped.
-8. Gaps → `dev-fix-reviews` (return `dev-debug` or `dev-fix-bug`). Ship-ready ([`dev-ship` preconditions](../dev-ship/SKILL.md#preconditions)) → `dev-ship`. Any other verdict stays in review or `dev-fix-reviews`.
+8. Gaps → `dev-fix-reviews` (return `dev-debug` or `dev-fix-bug`). Ship-ready ([`dev-ship` preconditions](../dev-ship/SKILL.md#preconditions)) → `dev-ship`. That ship pushes, updates the MR, posts the epic `jira-ship-comment.md` when the file exists, and moves the ticket to Code Review. For DEV-8943 the file is `.dev/features/dev-8943-gravacao-anotacoes/jira-ship-comment.md`, next to `roadmap.md`. Any other verdict stays in review or `dev-fix-reviews`.
 9. Finish only if `validate_state.py` passes.
 
 Production/high-risk: wider triage, **proposed** mitigation (not executed without authorization), optional postmortem. Rigor increases; the patch stays minimal.
