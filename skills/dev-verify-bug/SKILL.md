@@ -16,7 +16,7 @@ Load [../dev-shared/SKILL.md](../dev-shared/SKILL.md). Fresh context. Author ≠
 
 1. Reproduce the original symptom.
 2. Scratch at the pre-fix commit: regression test **fails**. HEAD: **passes**.
-3. Regressions + cause (not just symptom) + diff scope. Visual bugs: screen visual contract against the diff — values from the Figma pack (`figma/<node-id>.json`), and the report names every compared screen `node-id`.
+3. Regressions + cause (not just symptom) + diff scope. Visual bugs use the same `visual-manifest.json` as features: pack values, then `tools/visual-runner` capture and compare for every state and viewport. No runtime or missing cell is INCOMPLETE, not PASS. The report names every compared screen `node-id`.
 4. `validation.md`: reproduction, RED/GREEN, commands/results, `path:line`, diff range, PASS/FAIL/INCOMPLETE, plus `## Completeness`.
 
 ## Completeness

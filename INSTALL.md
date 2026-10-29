@@ -29,7 +29,18 @@ for d in /path/to/dev.harness/skills/dev-*; do
 done
 ```
 
-If the host documents a different project skill directory, link there instead. Copy instead of symlink only if the environment blocks links. Python 3 for scripts.
+If the host documents a different project skill directory, link there instead. Copy instead of symlink only if the environment blocks links. Python 3 for gate scripts.
+
+UI proof also needs Node.js 20 and the visual runner:
+
+```bash
+cd /path/to/dev.harness/tools/visual-runner
+npm ci
+npx playwright install chromium
+npm test
+```
+
+Rebuild and restart `dev.mcp` after upgrading it. An old MCP process does not expose `figma_fetch_screenshot`, recursive frames, or normalized Jira reads. Existing Figma packs without `schemaVersion` 1 are incomplete until intake saves them again.
 
 ## Review skill migration
 

@@ -20,7 +20,8 @@ This section is the single definition of **ship-ready**. Cycles, agents, reviews
 
 - **Feature:** `.dev/features/<slug>/validation.md` with PASS; both reviews ready (below).
 - **Bug:** reproduction + `.dev/bugs/<slug>/validation.md` with PASS; both reviews ready (below).
-- **Reviews ready:** the [readiness receipt](../dev-shared/references/evidence-contract.md#readiness-receipt) has each verdict `APPROVE`, both `open rows: 0` (an open row is a Completeness status of `gap` or `not-checked`), no file outside `.dev/` changed since either reviewed commit, including untracked files, and — when `design.md` has a `## Visual contract` — `QA figma-screens` covering every cited screen with its pack PNG. A missing receipt or pair means the review ran outside the flow or in another conversation: stop before Gate S and re-run it. Do not reconstruct a report from memory. `ADJUST`, `BLOCK`, `INCOMPLETE`, an open row, a stale commit, or incomplete Figma coverage routes to `dev-fix-reviews` or the review.
+- **Reviews ready:** the [readiness receipt](../dev-shared/references/evidence-contract.md#readiness-receipt) has each verdict `APPROVE`, both `open rows: 0` (an open row is a Completeness status of `gap` or `not-checked`), no file outside `.dev/` changed since either reviewed commit, including untracked files, and — when the flow cites a screen — calculated visual evidence whose Git SHA and Figma revision still match. A missing receipt or pair means the review ran outside the flow or in another conversation: stop before Gate S and re-run it. Do not reconstruct a report from memory. `ADJUST`, `BLOCK`, `INCOMPLETE`, an open row, a stale commit, or incomplete Figma coverage routes to `dev-fix-reviews` or the review.
+- **Epic:** when `.dev/epic.json` exists, `validate_epic.py` must also exit 0. Any child verdict of `FAIL`, `INCOMPLETE`, or `BLOCK`, any open Completeness row, or any missing visual proof blocks the epic and names that child.
 - INCOMPLETE is **not** ready. Draft MR only if GitLab supports it **and** the user asks, with risks in the body.
 
 ```bash
@@ -29,6 +30,7 @@ python3 "$SHARED/validate_state.py" .dev/STATE.md
 python3 "$(dirname "$SKILL_DIR")/dev-verify-feature/scripts/validate_feature.py" .dev/features/<slug>/validation.md --require-pass  # feature
 python3 "$(dirname "$SKILL_DIR")/dev-verify-bug/scripts/validate_bug.py" .dev/bugs/<slug> --require-pass  # bug
 python3 "$SHARED/validate_readiness.py" .dev/<features|bugs>/<slug>
+python3 "$SHARED/validate_epic.py" .dev/epic.json --repo .  # only when the epic manifest exists
 ```
 
 Any non-zero exit blocks.

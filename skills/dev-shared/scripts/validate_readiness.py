@@ -4,14 +4,27 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import re
 import subprocess
 from pathlib import Path
 
+CONTRACT_PATH = Path(__file__).with_name("visual_contract.py")
+
+
+def load_contract():
+    spec = importlib.util.spec_from_file_location("visual_contract", CONTRACT_PATH)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(CONTRACT_PATH)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+CONTRACT = load_contract()
+
 REVIEWS = ("MR", "QA")
 LINE = re.compile(r"^(MR|QA) (verdict|open rows|reviewed|figma-screens):\s*(\S+)\s*$")
-NODE_ID = re.compile(r"\b(\d{1,6})[:-](\d{3,6})\b")
-VISUAL = re.compile(r"^## Visual contract\b[^\n]*\n(.*?)(?=^## |\Z)", re.M | re.S)
 
 
 def parse(text: str) -> dict[tuple[str, str], str]:
@@ -26,23 +39,6 @@ def parse(text: str) -> dict[tuple[str, str], str]:
 
 def git(repo: Path, *args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True)
-
-
-def cited_screens(flow_dir: Path) -> list[str]:
-    design = flow_dir / "design.md"
-    if not design.is_file():
-        return []
-    visual = VISUAL.search(design.read_text(encoding="utf-8"))
-    if not visual:
-        return []
-    ids: list[str] = []
-    seen: set[str] = set()
-    for match in NODE_ID.finditer(visual.group(1)):
-        node_id = f"{match.group(1)}:{match.group(2)}"
-        if node_id not in seen:
-            seen.add(node_id)
-            ids.append(node_id)
-    return ids
 
 
 def validate(flow_dir: Path, repo: Path) -> list[str]:
@@ -82,41 +78,13 @@ def validate(flow_dir: Path, repo: Path) -> list[str]:
         if untracked:
             errors.append("untracked files outside .dev: " + ", ".join(untracked))
 
-    screens = cited_screens(flow_dir)
-    if screens:
-        recorded = fields.get(("QA", "figma-screens"))
-        if recorded is None:
-            errors.append(
-                "QA: needs a figma-screens line when design.md has a Visual contract"
-            )
-        else:
-            match = re.fullmatch(r"(\d+)/(\d+)", recorded)
-            if not match:
-                errors.append(f"QA: figma-screens {recorded!r} is not compared/cited")
-            elif int(match.group(1)) < len(screens):
-                errors.append(
-                    f"QA: figma-screens {recorded} covers fewer than the "
-                    f"{len(screens)} screens cited in design.md"
-                )
-        figma_dir = flow_dir / "figma"
-        missing_png = [node_id for node_id in screens if not pack_png(figma_dir, node_id)]
-        if missing_png:
-            errors.append(
-                "missing Figma pack PNG for: " + ", ".join(missing_png)
-                + " (run figma_pack.py after saving the screenshots)"
-            )
+    reviewed = {
+        sha
+        for review in REVIEWS
+        if (sha := fields.get((review, "reviewed")))
+    }
+    errors.extend(CONTRACT.evidence_errors(flow_dir, reviewed))
     return errors
-
-
-def pack_png(figma_dir: Path, node_id: str) -> Path | None:
-    """`<id>.png` or `<id>-<slug>.png` (the historical naming)."""
-    stem = node_id.replace(":", "-")
-    exact = figma_dir / f"{stem}.png"
-    if exact.is_file():
-        return exact
-    for path in sorted(figma_dir.glob(f"{stem}-*.png")):
-        return path
-    return None
 
 
 def main(argv: list[str] | None = None) -> int:

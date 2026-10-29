@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import shutil
 import subprocess
 import tempfile
@@ -445,21 +446,51 @@ class ValidatorsTest(unittest.TestCase):
                 encoding="utf-8",
             )
             errors = self.readiness.validate(flow, repo)
-            self.assertTrue(any("needs a figma-screens line" in e for e in errors))
-            self.assertTrue(any("missing Figma pack PNG" in e for e in errors))
+            self.assertTrue(any("visual-manifest.json is required" in e for e in errors))
 
+            evidence = flow / "evidence" / "visual" / "203-13054" / "default" / "480x320"
+            evidence.mkdir(parents=True)
+            for name in ("app.png", "figma.png", "diff.png"):
+                (evidence / name).write_bytes(b"png")
+            entry_id = "REQ-001/203:13054/default/480x320"
+            revision = "2026-10-29T10:00:00Z"
+            (evidence / "result.json").write_text(
+                json.dumps({
+                    "schemaVersion": 1,
+                    "status": "pass",
+                    "entryId": entry_id,
+                    "gitSha": sha,
+                    "figmaRevision": revision,
+                }),
+                encoding="utf-8",
+            )
+            (flow / "visual-manifest.json").write_text(
+                json.dumps({
+                    "schemaVersion": 1,
+                    "unresolved": [],
+                    "entries": [{
+                        "id": entry_id,
+                        "jiraKey": "DEV-1",
+                        "requirement": "REQ-001",
+                        "fileKey": "abc",
+                        "nodeId": "203:13054",
+                        "state": "default",
+                        "viewport": {"width": 480, "height": 320},
+                        "route": "/pay",
+                        "figmaRevision": revision,
+                        "evidence": "evidence/visual/203-13054/default/480x320/result.json",
+                    }],
+                }),
+                encoding="utf-8",
+            )
             receipt.write_text(
                 f"MR verdict: APPROVE\nMR open rows: 0\nMR reviewed: {sha}\n"
-                "QA verdict: APPROVE\nQA open rows: 0\nQA figma-screens: 0/1\n"
+                "QA verdict: APPROVE\nQA open rows: 0\nQA figma-screens: 2/1\n"
                 f"QA reviewed: {sha}\n",
                 encoding="utf-8",
             )
             errors = self.readiness.validate(flow, repo)
-            self.assertTrue(any("covers fewer than the 1 screens" in e for e in errors))
-            self.assertTrue(any("missing Figma pack PNG" in e for e in errors))
-
-            (flow / "figma").mkdir()
-            (flow / "figma" / "203-13054.png").write_bytes(b"png")
+            self.assertTrue(any("2/1 != calculated 1/1" in e for e in errors))
             receipt.write_text(
                 f"MR verdict: APPROVE\nMR open rows: 0\nMR reviewed: {sha}\n"
                 "QA verdict: APPROVE\nQA open rows: 0\nQA figma-screens: 1/1\n"

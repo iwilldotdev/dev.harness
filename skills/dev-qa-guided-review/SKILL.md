@@ -159,7 +159,7 @@ Read `integration-heuristics.md` and `design-fidelity.md` again for (b). No new 
 
 **(a) Business rules.** Jira criteria × diff/test (`path:line`) or `MISSING`.
 
-**(b) Pixel-perfect.** Only frames classified `screen`. Compare the visual contract: screen screenshot plus `visual`, `layout`, `fills`, `strokes`, and `text` — from the pack. Mismatch: layout, typography, overlay, asset, spacing, token, state, copy, missing, `fixed-size`, `absolute`, `effect`, `complex-fill`, `stroke`, `opacity`. “Looks like the DS” ≠ OK. Without a confirmed screen, do not mark OK. When the surface runs, add the comparison triage from design-fidelity.md (app screenshot at the frame width vs the pack PNG; score/heatmap is triage, never proof). Count the screens actually compared — this run's `figma-screens` number.
+**(b) Pixel-perfect.** Only frames classified `screen`. Compare the visual contract: screen screenshot plus `visual`, `layout`, `fills`, `strokes`, and `text` — from the pack. Mismatch: layout, typography, overlay, asset, spacing, token, state, copy, missing, `fixed-size`, `absolute`, `effect`, `complex-fill`, `stroke`, `opacity`. “Looks like the DS” ≠ OK. Without a confirmed screen, do not mark OK. When the surface can run, `tools/visual-runner` capture and compare are required for every manifest cell (screen, state, viewport). Copy the calculated `QA figma-screens` ratio from that evidence; do not estimate it. No runtime, truncated pack, or missing cell is `INCOMPLETE` or `BLOCK`, never a textual PASS.
 
 **(c) Integration.** Contracts, breaking changes, callers outside the diff, failed CI, flags. Failure scenario + blast radius.
 
@@ -169,7 +169,7 @@ Read `integration-heuristics.md` and `design-fidelity.md` again for (b). No new 
 
 Fill `report-template.md` in chat, including section 3 Completeness. Section 10 only if requested. Verdict: `APPROVE` / `ADJUST` / `BLOCK` / `INCOMPLETE`.
 
-The full report stays in chat. Never write `QA_REVIEW.md`. Inside an active flow, rewrite the three `QA` lines of the readiness receipt after every run, whatever the verdict, as defined in [../dev-shared/references/evidence-contract.md](../dev-shared/references/evidence-contract.md#readiness-receipt) — and when the flow's `design.md` has a `## Visual contract`, add `QA figma-screens: <compared>/<cited>` (cited = screens in that section; compared = screens this run actually compared against the implementation). Outside a flow, write nothing.
+The full report stays in chat. Never write `QA_REVIEW.md`. Inside an active flow, rewrite the three `QA` lines of the readiness receipt after every run, whatever the verdict, as defined in [../dev-shared/references/evidence-contract.md](../dev-shared/references/evidence-contract.md#readiness-receipt) — and when the flow cites a screen, add `QA figma-screens: <pass>/<entries>` copied from `visual-runner verify-manifest` and the evidence files. Outside a flow, write nothing. The evidence paths, hashes, and covered set stay in the flow; the narrative stays in chat.
 
 Branch mode: section 1 says **MR: none (branch review)** + merge-base; do not invent an IID.
 

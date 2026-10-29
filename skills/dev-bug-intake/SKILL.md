@@ -16,7 +16,7 @@ Load [../dev-shared/SKILL.md](../dev-shared/SKILL.md). Read-only. No patch. A vi
 
 Bind and target follow the same target discovery as QA (parser, remote, MR/branch, no hardcode). Ambiguity goes to the gap round. Read the ticket, Figma, git, and recent commits before asking. If the ticket is a child of DEV-8943, also read `.dev/features/dev-8943-gravacao-anotacoes/roadmap.md` and `jira-ship-comment.md`. The ship comment is part of every cycle of that epic.
 
-Extract: symptom, expected × actual, environment, frequency, first/last known state, severity, blast radius, recent regression (commits/pipelines). UI: **screen** frame and its visual contract only if the bug is visual.
+Extract: symptom, expected × actual, environment, frequency, first/last known state, severity, blast radius, recent regression (commits/pipelines). A visual bug writes the same `visual-manifest.json` as a feature, saves the screen pack with `figma_fetch_screenshot`, and runs `figma_pack.py --check` plus `validate_intake.py` before Gate B-A. It does not depend on a feature `design.md`.
 
 Classify: dev/staging/prod; functional/UI/integration/performance; reproducible/unknown; normal/high-risk.
 

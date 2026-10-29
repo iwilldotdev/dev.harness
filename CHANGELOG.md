@@ -2,6 +2,15 @@
 
 This harness uses SemVer. Contract, gate, and artifact changes are recorded here.
 
+## 0.4.0 — 2026-10-29
+
+- Visual evidence is calculated. `visual-manifest.json` schemaVersion 1 lists requirement × screen × state × viewport. `validate_readiness.py` accepts only matching `result.json` files bound to the reviewed Git SHAs and the Figma revision. A self-reported `QA figma-screens` ratio that disagrees is a failure.
+- `figma_pack.py --check` rejects a legacy pack, a truncated or incomplete design context, a node-id mismatch, and a PNG that is undecodable or the wrong size. Packs without schemaVersion 1 stay `INCOMPLETE` until they are repopulated.
+- Feature and bug intakes write the same manifest. `validate_intake.py` blocks unresolved screens. `figma_get_frames` is recursive, and `map_tickets_frames.py --overrides` records a versioned human join.
+- `tools/visual-runner` captures a local app with Playwright at a fixed viewport and device scale, then compares it with pixelmatch. Copy and dimensions fail immediately. The pixel limit covers calibrated antialiasing only. Masks must be small and justified.
+- `validate_epic.py` blocks an epic when any child is `FAIL`, `INCOMPLETE`, `BLOCK`, has an open Completeness row, or lacks visual proof.
+- dev.mcp 1.1.0 adds design-context `schemaVersion` and `completeness`, canonical scale-1 screenshots, `figma_fetch_screenshot` bytes, recursive frames, and `jira_normalize_issue`.
+
 ## 0.3.0 — 2026-10-29
 
 - Figma pack: intake/design persist each screen as `figma/<node-id>.json` + `.png` + `pack.json` (`lastModified`, `fetchedAt`); execute, verify, and reviews read the pack instead of refetching. New `dev-shared/scripts/figma_pack.py` builds the manifest and `--check` fails while a screen cited in `design.md` lacks its pack files.

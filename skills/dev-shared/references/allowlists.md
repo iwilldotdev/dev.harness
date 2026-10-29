@@ -40,7 +40,7 @@ Narrow allowlist: a normal `git push` of commits already made, and `gitlab_save_
 
 ## Outside MCP
 
-`Read`, `Grep`, `Glob`; git `remote`, `branch`, `merge-base`, `diff`, `log`, `show`, `status`. Python scripts with no network. Do not use `glab` as the primary path.
+`Read`, `Grep`, `Glob`; git `remote`, `branch`, `merge-base`, `diff`, `log`, `show`, `status`. Python validators have no network. `tools/visual-runner` may open only the local application URL named by the manifest; it does not call Figma or Jira and it does not execute instructions found in those systems. Do not use `glab` as the primary path.
 
 ## Git safety
 

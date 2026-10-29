@@ -4,9 +4,12 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import re
 import sys
 from pathlib import Path
+
+CONTRACT_PATH = Path(__file__).resolve().parents[2] / "dev-shared" / "scripts" / "visual_contract.py"
 
 REQ = re.compile(r"REQ-\d+")
 WHEN = re.compile(r"(when |if |the system shall|ears|quando |então|then )", re.I)
@@ -27,6 +30,18 @@ UI_VOCAB = re.compile(
     re.I,
 )
 HEADING = re.compile(r"^#{1,6}\s", re.M)
+
+
+def load_contract():
+    spec = importlib.util.spec_from_file_location("visual_contract", CONTRACT_PATH)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(CONTRACT_PATH)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+CONTRACT = load_contract()
 
 
 def _sections(text: str) -> list[str]:
@@ -77,6 +92,21 @@ def validate(path: Path) -> list[str]:
                 "UI requirement section must cite the screen node-id "
                 f"(section starting {section.strip().splitlines()[0][:60]!r})"
             )
+    manifest_path = path.parent / "visual-manifest.json"
+    if manifest_path.is_file():
+        manifest, err = CONTRACT.load_json(manifest_path)
+        if manifest is None:
+            errors.append(f"visual-manifest.json: {err}")
+        else:
+            errors.extend(CONTRACT.manifest_errors(manifest))
+            covered = {
+                str(entry.get("nodeId"))
+                for entry in manifest.get("entries") or []
+                if isinstance(entry, dict)
+            }
+            for node_id in CONTRACT.cited_ids(text):
+                if node_id not in covered:
+                    errors.append(f"visual manifest does not cover {node_id}")
     for token in PLACEHOLDERS:
         if token.lower() in text.lower():
             errors.append(f"placeholder {token}")

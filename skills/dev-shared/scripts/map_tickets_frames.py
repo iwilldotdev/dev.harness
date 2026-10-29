@@ -53,11 +53,19 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--frames", help="figma_get_frames payload JSON")
     parser.add_argument("--keys", help="Comma-separated Jira keys")
     parser.add_argument("--tickets", help="Jira search payload JSON ({issues:[{key}]})")
+    parser.add_argument("--overrides", help="JSON list of {ticket, nodeId, reason}")
+    parser.add_argument("--strict", action="store_true", help="Fail when a ticket or override has no frame.")
     args = parser.parse_args(argv)
     if not args.frames:
         parser.error("--frames is required")
     frames = load_frames(Path(args.frames))
     keys = load_keys(args, frames)
+    overrides: dict[str, dict] = {}
+    if args.overrides:
+        payload = json.loads(Path(args.overrides).read_text(encoding="utf-8"))
+        for item in payload:
+            if isinstance(item, dict) and item.get("ticket") and item.get("nodeId") and item.get("reason"):
+                overrides[str(item["ticket"]).upper()] = item
 
     by_key: dict[str, list[dict]] = {key: [] for key in keys}
     unmatched_frames: list[dict] = []
@@ -71,17 +79,30 @@ def main(argv: list[str] | None = None) -> int:
         if not hit and not JIRA_KEY_RE.search(name):
             unmatched_frames.append(frame)
 
-    print("| Ticket | Frame node-id | Frame name | Page |")
-    print("| --- | --- | --- | --- |")
+    by_id = {str(frame.get("id")): frame for frame in frames}
+    print("| Ticket | Frame node-id | Frame name | Page path | Section path | Source |")
+    print("| --- | --- | --- | --- | --- | --- |")
     open_tickets: list[str] = []
     for key in keys:
-        if not by_key[key]:
-            open_tickets.append(key)
-            print(f"| {key} | MISSING | | |")
+        override = overrides.get(key)
+        chosen = by_key[key]
+        source = "name"
+        if override:
+            frame = by_id.get(str(override["nodeId"]))
+            chosen = [frame] if frame else []
+            source = "override"
+            if not frame:
+                open_tickets.append(key)
+        if not chosen:
+            if key not in open_tickets:
+                open_tickets.append(key)
+            print(f"| {key} | MISSING | | | | {source} |")
             continue
-        for frame in by_key[key]:
+        for frame in chosen:
+            page_path = " / ".join(frame.get("pagePath") or [frame.get("page", "")])
+            section_path = " / ".join(frame.get("sectionPath") or [])
             print(
-                f"| {key} | {frame.get('id')} | {frame.get('name')} | {frame.get('page', '')} |"
+                f"| {key} | {frame.get('id')} | {frame.get('name')} | {page_path} | {section_path} | {source} |"
             )
     if unmatched_frames:
         print()
@@ -91,6 +112,8 @@ def main(argv: list[str] | None = None) -> int:
     if open_tickets:
         print()
         print("Tickets sem frame (gap round): " + ", ".join(open_tickets))
+    if args.strict and open_tickets:
+        return 1
     return 0
 
 
