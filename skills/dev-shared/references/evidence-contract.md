@@ -29,10 +29,10 @@ MR reviewed: <git rev-parse HEAD at review time>
 QA verdict: APPROVE | ADJUST | BLOCK | INCOMPLETE
 QA open rows: <count>
 QA reviewed: <git rev-parse HEAD at review time>
-QA figma-screens: <screens compared>/<screens cited in design.md>
+QA figma-screens: <screens compared>/<screens in the flow union>
 ```
 
-`QA figma-screens` is mandatory when the flow cites a screen in `design.md`, `spec.md`, `intake.md`, or `visual-manifest.json`. The ratio is calculated from `result.json` files, not estimated: it must equal `<pass entries>/<manifest entries>`, every entry must match the reviewed Git SHAs and the Figma revision, and `app.png`, `figma.png`, and `diff.png` must sit beside each result. A changed Git SHA or Figma revision invalidates the evidence. Omit the line only when the flow cites no screen.
+`QA figma-screens` is mandatory when any markdown in the flow cites a screen, including prior-cycle files such as `c1/design.md` and `design-c2.md`, when `intake*.md` names a screen, when `figma/` already holds a node-id file, or when `visual-manifest.json` exists. The cited set is that union. A later cycle cannot drop a screen by renaming `design.md` or by writing an empty visual contract. The ratio is calculated from `result.json` files, not estimated: it must equal `<pass entries>/<manifest entries>`, every entry must match the reviewed Git SHAs and the Figma revision, and `app.png`, `figma.png`, and `diff.png` must sit beside each result. A changed Git SHA or Figma revision invalidates the evidence. Omit the line only when that union is empty.
 
 Only the verdict, the count, and the commit go to disk; the report body stays in chat. `validate_readiness.py` fails unless both verdicts are `APPROVE`, both counts are `0`, and no file outside `.dev/` changed since either reviewed commit. Untracked files outside `.dev/` count as a change.
 

@@ -18,7 +18,7 @@ Load [../dev-shared/SKILL.md](../dev-shared/SKILL.md) and, when the feature has 
 
 1. Re-run gates/tests.
 2. Each `REQ-NNN` → outcome, test, `path:line`.
-3. High-risk: failure/rollback/compatibility. UI: **screen** frame, cited states, and the visual contract (fixed size, absolute position, complex fill, effect, stroke, opacity, copy) against `path:line` — values come from the Figma pack (`figma/<node-id>.json`); run `figma_pack.py --check` and `validate_intake.py` first. When the surface can run, run `tools/visual-runner` capture and compare for every `visual-manifest.json` cell. A surface that cannot run is INCOMPLETE, not PASS.
+3. High-risk: failure/rollback/compatibility. UI: **screen** frame, cited states, and the visual contract (fixed size, absolute position, complex fill, effect, stroke, opacity, copy) against `path:line` — values come from the Figma pack (`figma/<node-id>.json`); run `figma_pack.py --check` and `validate_intake.py` first. When the surface can run, run `tools/visual-runner` capture and compare for every `visual-manifest.json` cell. The cell set is the union of every Visual contract in the flow, including prior-cycle markdown, and every node-id already stored under `figma/`. A later empty contract does not remove a screen. A surface that cannot run is INCOMPLETE, not PASS.
 4. Executable end-to-end flow (browser → API → state) if the surface exists; otherwise INCOMPLETE, do not infer.
 5. `validation.md`: PASS / FAIL / INCOMPLETE, plus `## Completeness`. No evidence = FAIL.
 

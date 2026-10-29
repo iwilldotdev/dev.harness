@@ -54,6 +54,26 @@ class VisualGatesTest(unittest.TestCase):
             errors = self.intake.validate(flow)
             self.assertTrue(any("visual-manifest.json is required" in error for error in errors))
 
+    def test_prior_cycle_and_packed_png_stay_in_scope(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            flow = Path(tmp)
+            prior = flow / "c1"
+            prior.mkdir()
+            (prior / "design.md").write_text(
+                "# Design\n\n## Visual contract\n\n| Region | node-id |\n| --- | --- |\n| Card | 3544:5710 |\n",
+                encoding="utf-8",
+            )
+            (flow / "design-c2.md").write_text(
+                "# Design\n\n## Visual contract\n\nSem novos elementos visuais.\n",
+                encoding="utf-8",
+            )
+            figma = flow / "figma"
+            figma.mkdir()
+            (figma / "3516-3250-adm.png").write_bytes(b"not-a-png")
+            errors = self.intake.validate(flow)
+            self.assertTrue(any("visual-manifest.json is required" in error for error in errors))
+            self.assertTrue(any("3544:5710" in error and "3516:3250" in error for error in errors))
+
     def test_epic_blocks_an_incomplete_child(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)

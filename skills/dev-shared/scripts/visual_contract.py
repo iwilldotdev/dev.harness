@@ -47,24 +47,41 @@ def cited_ids(text: str) -> list[str]:
     return ids
 
 
+def _remember(ids: list[str], seen: set[str], node_id: str) -> None:
+    if node_id not in seen:
+        seen.add(node_id)
+        ids.append(node_id)
+
+
 def cited_from_flow(flow_dir: Path) -> list[str]:
+    """Union of every visual contract in the flow, including prior cycles and packed screens.
+
+    Renaming design.md or writing an empty later contract does not drop a screen.
+    """
     ids: list[str] = []
     seen: set[str] = set()
-    for name in ("design.md", "spec.md", "intake.md"):
-        path = flow_dir / name
+    if not flow_dir.is_dir():
+        return ids
+    for path in sorted(flow_dir.rglob("*.md")):
         if not path.is_file():
             continue
         source = path.read_text(encoding="utf-8")
         section = VISUAL.search(source)
-        if name == "intake.md":
-            blob = "\n".join(line for line in source.splitlines() if re.search(r"\bscreen\b", line, re.I))
-        else:
-            blob = section.group(1) if section else ""
+        blob = section.group(1) if section else ""
+        if path.name.startswith("intake"):
+            blob += "\n" + "\n".join(
+                line for line in source.splitlines() if re.search(r"\bscreen\b", line, re.I)
+            )
         for match in NODE_ID.finditer(blob):
-            node_id = f"{match.group(1)}:{match.group(2)}"
-            if node_id not in seen:
-                seen.add(node_id)
-                ids.append(node_id)
+            _remember(ids, seen, f"{match.group(1)}:{match.group(2)}")
+    figma = flow_dir / "figma"
+    if figma.is_dir():
+        for path in sorted(figma.iterdir()):
+            if not path.is_file() or path.name == "pack.json":
+                continue
+            match = NODE_ID.search(path.stem)
+            if match:
+                _remember(ids, seen, f"{match.group(1)}:{match.group(2)}")
     return ids
 
 
@@ -145,11 +162,12 @@ def manifest_errors(manifest: dict) -> list[str]:
 
 def evidence_errors(flow_dir: Path, reviewed_shas: set[str]) -> list[str]:
     path = flow_dir / "visual-manifest.json"
-    needs = path.is_file() or bool(cited_from_flow(flow_dir))
+    cited = cited_from_flow(flow_dir)
+    needs = path.is_file() or bool(cited)
     if not needs:
         return []
     if not path.is_file():
-        return ["visual-manifest.json is required when the flow cites a screen"]
+        return ["visual-manifest.json is required when the flow cites a screen: " + ", ".join(cited)]
     manifest, err = load_json(path)
     if manifest is None:
         return [f"visual-manifest.json: {err}"]
@@ -158,6 +176,14 @@ def evidence_errors(flow_dir: Path, reviewed_shas: set[str]) -> list[str]:
         return errors
     passed = 0
     entries = manifest.get("entries") if isinstance(manifest.get("entries"), list) else []
+    covered = {
+        str(entry.get("nodeId"))
+        for entry in entries
+        if isinstance(entry, dict) and entry.get("nodeId")
+    }
+    missing = [node_id for node_id in cited if node_id not in covered]
+    if missing:
+        errors.append("manifest does not cover screens: " + ", ".join(missing))
     for entry in entries:
         if not isinstance(entry, dict):
             continue

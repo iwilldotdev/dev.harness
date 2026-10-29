@@ -33,7 +33,7 @@ Quota: do not call `figma_get_file` without `depth`/`ids`. One hop + section sib
 Intake and design persist what they fetch; execute/verify/reviews read the pack from disk instead of refetching:
 
 - Location: `<flow_dir>/figma/<node-id>.json` (the `figma_get_design_context` payload, dash form: `3544-5710.json`), `<node-id>.png` (the screen screenshot), and `pack.json` (manifest with `fileKey`, `nodeId`, `lastModified`, `fetchedAt`).
-- After fetching a screen, save the payload + PNG and run `python3 "$SHARED/scripts/figma_pack.py" <flow_dir>`; run it with `--check` before a review to prove every screen cited in `design.md` is packed.
+- After fetching a screen, save the payload + PNG and run `python3 "$SHARED/scripts/figma_pack.py" <flow_dir>`; run it with `--check` before a review to prove every screen in the flow union is packed. That union includes prior-cycle markdown and every node-id already stored under `figma/`.
 - Downstream steps (execute, verify, QA, MR review) `Read` the pack JSON/PNG; the numbers come from there.
 - Refetch a node only when `figma_get_file_meta` returns a `lastModified` newer than the pack entry, or when the payload reported `truncated` (use `truncation.nextChildIds` to fetch exactly the cut children).
 

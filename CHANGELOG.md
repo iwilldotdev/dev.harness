@@ -9,6 +9,7 @@ This harness uses SemVer. Contract, gate, and artifact changes are recorded here
 - Feature and bug intakes write the same manifest. `validate_intake.py` blocks unresolved screens. `figma_get_frames` is recursive, and `map_tickets_frames.py --overrides` records a versioned human join.
 - `tools/visual-runner` captures a local app with Playwright at a fixed viewport and device scale, then compares it with pixelmatch. Copy and dimensions fail immediately. The pixel limit covers calibrated antialiasing only. Masks must be small and justified.
 - `validate_epic.py` blocks an epic when any child is `FAIL`, `INCOMPLETE`, `BLOCK`, has an open Completeness row, or lacks visual proof.
+- The cited screen set is the union of every Visual contract under the flow, including prior-cycle files, plus every node-id already stored in `figma/`. Renaming `design.md` or writing an empty later contract does not drop a screen.
 - dev.mcp 1.1.0 adds design-context `schemaVersion` and `completeness`, canonical scale-1 screenshots, `figma_fetch_screenshot` bytes, recursive frames, and `jira_normalize_issue`.
 
 ## 0.3.0 — 2026-10-29

@@ -28,7 +28,7 @@ def validate(flow_dir: Path) -> list[str]:
     if not path.is_file():
         cited = CONTRACT.cited_from_flow(flow_dir)
         if cited:
-            return ["visual-manifest.json is required when a screen is cited"]
+            return ["visual-manifest.json is required when a screen is cited: " + ", ".join(cited)]
         return []
     manifest, err = CONTRACT.load_json(path)
     if manifest is None:
