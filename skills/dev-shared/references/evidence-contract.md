@@ -29,7 +29,10 @@ MR reviewed: <git rev-parse HEAD at review time>
 QA verdict: APPROVE | ADJUST | BLOCK | INCOMPLETE
 QA open rows: <count>
 QA reviewed: <git rev-parse HEAD at review time>
+QA figma-screens: <screens compared>/<screens cited in design.md>
 ```
+
+`QA figma-screens` is mandatory when the flow's `design.md` has a `## Visual contract` (a UI feature); omit it only when that section does not exist. `<screens compared>` counts the screens the QA run actually compared against an implementation surface (screenshot, `path:line` values, or compare-tool output) in this run. `validate_readiness.py` fails unless the count covers every cited screen and each cited screen has a pack PNG under `figma/` — 100% Figma coverage is part of ship-ready, not a judgment call.
 
 Only the verdict, the count, and the commit go to disk; the report body stays in chat. `validate_readiness.py` fails unless both verdicts are `APPROVE`, both counts are `0`, and no file outside `.dev/` changed since either reviewed commit. Untracked files outside `.dev/` count as a change.
 

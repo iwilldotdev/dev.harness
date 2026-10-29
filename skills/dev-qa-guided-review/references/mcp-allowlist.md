@@ -76,9 +76,11 @@ Structured question tools (gates A/B/C) are **not** `dev.mcp` tools. Use them wh
 ### Figma (design fidelity)
 
 - `figma_whoami` — smoke for dimension (b).
-- `figma_get_design_context` — preferred (`nodeIds`, `includeScreenshot: true`). Do not pass `includeVariables`. Required on the ticket node **and** each screen hop (Step 1.5).
+- `figma_get_design_context` — preferred (`nodeIds`, `includeScreenshot: true`, optional `fields`). Do not pass `includeVariables`. Required on the ticket node **and** each screen hop (Step 1.5), unless the flow's Figma pack already holds that node and `figma_get_file_meta` shows the file has not changed. The payload carries `hyperlink`/`reactions` pointers, `lastModified`, and `truncation.nextChildIds` for cut subtrees.
 - `figma_get_screenshot` — dimension (b) evidence is the **screen/component** screenshot, not the spec-sheet.
-- `figma_get_metadata` — required at Step 1.5 (pointers, hyperlinks, section siblings).
+- `figma_get_metadata` — required at Step 1.5 (pointers, hyperlinks, section siblings); the XML carries `hyperlinkNode`/`prototypeNode` attrs when present.
+- `figma_get_file_meta` — cheap freshness check (`name`, `lastModified`, `version`); decides whether a persisted pack entry is stale.
+- `figma_get_frames` — frame index per page (`id`, `name`, `type`, `size`, `page`), one REST call; the ticket × frame join surface for intake.
 - `figma_get_variable_defs` — do not call. Variables are optional; a 403 does not block the review
 - `figma_get_comments`
 - `figma_download_assets` — only if the AC cites an icon/asset.

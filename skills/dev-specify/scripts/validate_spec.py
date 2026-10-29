@@ -18,6 +18,20 @@ OUTCOME = re.compile(r"(outcome|expected|então|then the)", re.I)
 UI_REF = re.compile(r"(figma|node-id)", re.I)
 VISUAL = re.compile(r"^## Visual contract\b[^\n]*\n(.*?)(?=^## |\Z)", re.M | re.S)
 NODE_ID = re.compile(r"\b\d+[:-]\d+\b")
+# UI surface vocabulary inside a REQ paragraph. Deliberately excludes DB words
+# ("tabela", "coluna", "endpoint") to avoid flagging data-model REQs.
+UI_VOCAB = re.compile(
+    r"\b(tela|screen|modal|botão|botao|button|card|drawer|popover|tooltip|"
+    r"dropdown|menu lateral|breadcrumb|rodapé|rodape|footer|checkbox|sidebar|"
+    r"anexar à tela|tela nova)\b",
+    re.I,
+)
+HEADING = re.compile(r"^#{1,6}\s", re.M)
+
+
+def _sections(text: str) -> list[str]:
+    parts = HEADING.split(text)
+    return [part for part in parts if part.strip()]
 
 
 def validate(path: Path) -> list[str]:
@@ -40,12 +54,29 @@ def validate(path: Path) -> list[str]:
         errors.append("spec must declare risk")
     if not OUTCOME.search(text):
         errors.append("spec must declare expected outcomes")
+    visual = VISUAL.search(text)
     if UI_REF.search(text):
-        visual = VISUAL.search(text)
         if not visual:
             errors.append("UI spec that cites Figma must include Visual contract")
         elif not NODE_ID.search(visual.group(1)):
             errors.append("Visual contract must cite the screen node-id")
+    if visual:
+        rest = text[: visual.start()] + text[visual.end() :]
+        for node_id in {match.group(0) for match in NODE_ID.finditer(visual.group(1))}:
+            normalized_dash = node_id.replace(":", "-")
+            if node_id not in rest and normalized_dash not in rest:
+                errors.append(
+                    f"Visual contract screen {node_id} is not cited by any requirement"
+                )
+        for section in _sections(text[: visual.start()]):
+            if not REQ.search(section) or not UI_VOCAB.search(section):
+                continue
+            if NODE_ID.search(section):
+                continue
+            errors.append(
+                "UI requirement section must cite the screen node-id "
+                f"(section starting {section.strip().splitlines()[0][:60]!r})"
+            )
     for token in PLACEHOLDERS:
         if token.lower() in text.lower():
             errors.append(f"placeholder {token}")

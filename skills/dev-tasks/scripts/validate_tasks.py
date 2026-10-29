@@ -12,6 +12,17 @@ REQ = re.compile(r"REQ-\d+")
 PLACEHOLDERS = ("TODO", "TBD", "implement later", "similar to task")
 FILE = re.compile(r"(\.[A-Za-z0-9]{1,8}\b|/[\w.-]+|files?:)", re.I)
 IFACE = re.compile(r"(consumes|produces|interface)", re.I)
+NODE_ID = re.compile(r"\b\d+:\d+\b")
+UI_VOCAB = re.compile(
+    r"\b(tela|screen|modal|botão|botao|button|card|drawer|popover|tooltip|"
+    r"dropdown|menu lateral|breadcrumb|rodapé|rodape|footer|checkbox|sidebar|"
+    r"anexar à tela|tela nova)\b",
+    re.I,
+)
+# A task may declare it has no dedicated screen ("UI: sem screen dedicada …");
+# that waiver exempts the block from the node-id rule.
+UI_WAIVER = re.compile(r"ui\s*[(:]\s*sem\s*screen", re.I)
+TASK_HEADING = re.compile(r"^##\s+(?!Checklist)", re.M)
 
 
 def validate(path: Path) -> list[str]:
@@ -31,6 +42,14 @@ def validate(path: Path) -> list[str]:
         errors.append("tasks must list exact files")
     if not IFACE.search(text):
         errors.append("tasks must list interfaces consumed/produced")
+    blocks = TASK_HEADING.split(text)
+    for block in blocks[1:]:
+        if not UI_VOCAB.search(block) or NODE_ID.search(block) or UI_WAIVER.search(block):
+            continue
+        title = block.strip().splitlines()[0][:60]
+        errors.append(
+            f"UI task must name the screen node-id(s) (task {title!r})"
+        )
     for token in PLACEHOLDERS:
         if token.lower() in text.lower():
             errors.append(f"placeholder {token}")

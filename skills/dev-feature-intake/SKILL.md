@@ -22,10 +22,11 @@ Step 0 Bind → target (parser + git + MR) → read Jira/Figma/CI and code
 ## Steps
 
 1. Bind `dev.mcp`. Smoke `gitlab_whoami`. `figma_whoami` if a Figma URL is present.
-2. User text → `extract_refs.py`. Remote `origin` → `projectId`. Current branch. No IID: `gitlab_list_merge_requests` (`state: opened`, `sourceBranch`). Do not invent an IID. Branch mode: merge-base.
-3. After the target is readable: `jira_get_issue` + `jira_get_remote_issue_links`. Figma: `figma_get_design_context` + `figma_get_metadata` on each node, then the screen hop in design-fidelity.md. Capture the visual contract (fixed size, absolute position, complex fill, effect, stroke, opacity, copy) for each **screen**. Confluence only if linked and Jira has no AC/Figma.
-4. Read-only grounding: patterns, contracts, tests, docs. Verification surface (unit/API/browser/state). Do **not** propose architecture yet.
-5. Classify complexity (small/medium/large) and risk (normal/high) with evidence. Skip design/tasks only if small, normal risk, and no screen — propose that at Gate F-A, do not decide alone in manual mode. A screen, a large size, or high risk is not a skip.
+2. User text → `extract_refs.py` (`jira_keys`, `figma`, `figma_pointers`, `gitlab`). Remote `origin` → `projectId`. Current branch. No IID: `gitlab_list_merge_requests` (`state: opened`, `sourceBranch`). Do not invent an IID. Branch mode: merge-base. When the ticket is an epic (or names one), pull its children with **one** `jira_search_jql` (`parent = <epic> ORDER BY rank`) instead of N `jira_get_issue` calls; then fetch each child with trimmed `fields`.
+3. If the ticket is a child of DEV-8943, read `.dev/features/dev-8943-gravacao-anotacoes/roadmap.md` and `jira-ship-comment.md` before the gap round. The ship comment is part of every cycle of that epic.
+4. After the target is readable: `jira_get_issue` + `jira_get_remote_issue_links` on each ticket. Figma: `figma_get_frames` first (one call) to build the ticket × frame draft (`map_tickets_frames.py --frames <payload.json> --keys <keys>`; frames named after the ticket join directly) — confirm the mapping at the gate. Then `figma_get_design_context` + `figma_get_metadata` on each screen node, then the screen hop in design-fidelity.md (pointers now come from `figma_pointers`). Save each screen's payload + screenshot into the flow's Figma pack and run `figma_pack.py` (design-fidelity.md). Capture the visual contract (fixed size, absolute position, complex fill, effect, stroke, opacity, copy) for each **screen** from the pack. Confluence only if linked and Jira has no AC/Figma.
+5. Read-only grounding: patterns, contracts, tests, docs. Verification surface (unit/API/browser/state). Do **not** propose architecture yet.
+6. Classify complexity (small/medium/large) and risk (normal/high) with evidence. Skip design/tasks only if small, normal risk, and no screen — propose that at Gate F-A, do not decide alone in manual mode. A screen, a large size, or high risk is not a skip.
 
 ## Gap round (once)
 
@@ -40,7 +41,7 @@ In `mode: agent` this is the only question in the cycle. Gate F-A is then decide
 
 **⛔ Gate F-A** — Write the Gate briefing in chat before the question (confirming, artifact path, summary of target, Jira, spec vs screen, risk, proposed skip, confirm vs reject). Prompt verbatim `Gate F-A — Confirm context`. An ambiguous target is resolved by the `Target MR` / `Merge-base` questions of the gap round, not by a separate Gate A round.
 
-Artifact: `.dev/features/<slug>/intake.md` (keys, fileKey, spec **and** screen node-id, visual-contract notes, projectId, IID or “no MR”, risk, `## Decisions`). Empty field = `MISSING`. Update `.dev/STATE.md` (`flow: feature`).
+Artifact: `.dev/features/<slug>/intake.md` (keys, fileKey, spec **and** screen node-id, visual-contract notes, projectId, IID or “no MR”, risk, `## Decisions`). Empty field = `MISSING`. The Figma pack (`figma/`) belongs to the flow from this step on. Update `.dev/STATE.md` (`flow: feature`).
 
 ## Close
 

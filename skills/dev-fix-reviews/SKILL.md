@@ -30,7 +30,7 @@ The current round contains only **new** issues. Do not reopen what already close
 - `flow: feature|bug`
 - Return: `dev-execute` (feature) | `dev-debug` (hypothesis) | `dev-fix-bug` (incomplete patch)
 
-Visual GAP: reopen the **screen** `node-id` (`figma_get_design_context` + screenshot) **before** JSX. Apply the visual contract in [../dev-qa-guided-review/references/design-fidelity.md](../dev-qa-guided-review/references/design-fidelity.md): fixed size, absolute position, complex fill, effect, stroke, opacity, copy. Mismatch types include `fixed-size`, `absolute`, `effect`, `complex-fill`, `stroke`, `opacity`. No generic Modal/Drawer.
+Visual GAP: reopen the **screen** `node-id` from the Figma pack (`figma/<node-id>.json` + screenshot; `figma_get_design_context` only when the pack lacks it or `figma_get_file_meta` shows a newer `lastModified`) **before** JSX. Apply the visual contract in [../dev-qa-guided-review/references/design-fidelity.md](../dev-qa-guided-review/references/design-fidelity.md): fixed size, absolute position, complex fill, effect, stroke, opacity, copy. Mismatch types include `fixed-size`, `absolute`, `effect`, `complex-fill`, `stroke`, `opacity`. No generic Modal/Drawer.
 
 ## Loop
 
@@ -43,7 +43,7 @@ Visual GAP: reopen the **screen** `node-id` (`figma_get_design_context` + screen
 After verifier and both reviews:
 
 - Confirmed gaps remain → return to the owning skill. Manual mode names it in `Next skill:`. Agent mode loads it.
-- Ship-ready ([`dev-ship` preconditions](../dev-ship/SKILL.md#preconditions)) in manual mode → `dev-ship`.
+- Ship-ready ([`dev-ship` preconditions](../dev-ship/SKILL.md#preconditions)) in manual mode → `dev-ship`. That ship also posts the epic `jira-ship-comment.md` and moves the ticket to Code Review. For DEV-8943 the file is `.dev/features/dev-8943-gravacao-anotacoes/jira-ship-comment.md`.
 - Ship-ready in `mode: agent` → do **not** load `dev-ship`. Follow [../dev-shared/references/agent-mode.md](../dev-shared/references/agent-mode.md): write `mode: manual`, the run log, and stop. The last line is `Next skill: \`dev-ship\``.
 - `ADJUST`, `BLOCK`, an open Completeness row, or a receipt older than the last commit is not ship-ready. Continue the loop, or stop after three rounds.
 - A review `INCOMPLETE` with no confirmed code gap is not a return to execute, debug, or fix-bug. It is the review `INCOMPLETE` blockage in [../dev-shared/references/agent-mode.md](../dev-shared/references/agent-mode.md): stop and name that review. A third `INCOMPLETE` in a row stops the loop; do not start a fourth round.

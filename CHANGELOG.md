@@ -2,6 +2,16 @@
 
 This harness uses SemVer. Contract, gate, and artifact changes are recorded here.
 
+## 0.3.0 — 2026-10-29
+
+- Figma pack: intake/design persist each screen as `figma/<node-id>.json` + `.png` + `pack.json` (`lastModified`, `fetchedAt`); execute, verify, and reviews read the pack instead of refetching. New `dev-shared/scripts/figma_pack.py` builds the manifest and `--check` fails while a screen cited in `design.md` lacks its pack files.
+- Ship-ready now includes Figma coverage: the readiness receipt gains `QA figma-screens: <comparadas>/<citadas>`; `validate_readiness.py` requires it when `design.md` has a `## Visual contract`, requires `comparadas ≥ citadas`, and requires a pack PNG for every cited screen.
+- `validate_design.py` checks row content: every Visual contract row must cite the screen node-id and carry a concrete fact (measure, hex color, or literal copy). `validate_spec.py` fails a UI requirement section without a node-id and a Visual contract screen not cited by any requirement. `validate_tasks.py` fails a UI task without screen node-ids (explicit `UI: sem screen` waives it).
+- Pointer resolution no longer depends on prose: `figma_pointers` in `extract_refs.py` reads `prototypeNodeId`/`destinationNodeId`/hyperlink destinations, and `figma_get_design_context` (dev.mcp ≥ with pointers) returns `hyperlink` and `reactions` per node; metadata XML carries `hyperlinkNode`/`prototypeNode` attrs.
+- dev.mcp additions consumed by the flow: `figma_get_file_meta` (freshness), `figma_get_frames` (ticket × frame index), `fields` block selection, `truncation.nextChildIds`, and `lastModified` on the design-context payload.
+- New operational scripts in `dev-shared/scripts`: `map_tickets_frames.py` (draft ticket × frame × repo mapping from a `figma_get_frames` payload), `legacy_check.py` (CRLF/BOM drift, duplicated `<Compile>`/`appSettings` for the Windows-only legacy repo), and `merge_wave.py` (ordered task-worktree merges with conflict abort and post-merge checks).
+- Bug flows bind to the same fidelity contract: visual bug fixes cite the screen node-id from the pack; verify-bug names the compared screens.
+
 ## 0.2.0 — 2026-09-29
 
 - Visual contract for Figma screens: fixed sizing, absolute position, and complex styles in specify, design, execute, and review.

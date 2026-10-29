@@ -34,6 +34,14 @@ FIGMA_NODE_ATTR_RE = re.compile(
 FIGMA_XML_ID_RE = re.compile(r'\bid="(\d+:\d+)"')
 # Bare ids like 85:1999 / 203:11374; right side ≥3 digits avoids clock times (12:30).
 FIGMA_BARE_NODE_RE = re.compile(r"\b(\d{1,6}):(\d{3,6})\b")
+# Pointer destinations inside REST node payloads (JSON) and metadata XML:
+# prototype reactions, hyperlink objects, and prototypeNodeId attributes.
+FIGMA_POINTER_JSON_RE = re.compile(
+    r'"(?:prototypeNodeId|destinationNodeId|nodeId)"\s*:\s*"(\d+:\d+)"'
+)
+FIGMA_POINTER_XML_RE = re.compile(
+    r'\b(?:hyperlinkNode|prototypeNode|prototypeNodeId)="(\d+:\d+)"'
+)
 
 JIRA_FALSE_POSITIVES = frozenset(
     {
@@ -84,7 +92,7 @@ def _normalize_figma_node_id(left: str, right: str) -> str:
 
 
 def extract_figma_node_ids(text: str) -> list[str]:
-    """IDs in URLs, node-id= attrs, XML id=, and bare N:MMM. Not Figma hyperlinks."""
+    """IDs in URLs, node-id= attrs, XML id=, bare N:MMM, and pointer destinations. Not page prose."""
     ids: list[str] = []
     for entry in extract_figma(text):
         ids.extend(entry.get("node_ids") or [])
@@ -94,6 +102,24 @@ def extract_figma_node_ids(text: str) -> list[str]:
         ids.append(match.group(1))
     for match in FIGMA_BARE_NODE_RE.finditer(text):
         ids.append(_normalize_figma_node_id(match.group(1), match.group(2)))
+    for match in FIGMA_POINTER_JSON_RE.finditer(text):
+        ids.append(match.group(1))
+    for match in FIGMA_POINTER_XML_RE.finditer(text):
+        ids.append(match.group(1))
+    return _unique(ids)
+
+
+def extract_figma_pointers(text: str) -> list[str]:
+    """Pointer destinations only: prototype reactions, hyperlinks, prototypeNodeId.
+
+    These are the destinations of Figma internal links (the design-fidelity
+    'one hop'), separate from ids cited in prose/queries.
+    """
+    ids: list[str] = []
+    for match in FIGMA_POINTER_JSON_RE.finditer(text):
+        ids.append(match.group(1))
+    for match in FIGMA_POINTER_XML_RE.finditer(text):
+        ids.append(match.group(1))
     return _unique(ids)
 
 
@@ -191,6 +217,7 @@ def extract_all(text: str) -> dict[str, Any]:
         "jira_keys": extract_jira_keys(text),
         "figma": figma,
         "figma_node_ids": extract_figma_node_ids(text),
+        "figma_pointers": extract_figma_pointers(text),
         "gitlab": {
             "mrs": mrs,
             "project_paths": extract_gitlab_project_paths(text),
@@ -253,6 +280,19 @@ def _run_self_test() -> int:
         (
             "Vide ESSA TELA without a node id",
             {"figma_node_ids": []},
+        ),
+        (
+            'reactions: [{"action":{"destination":{"destinationNodeId":"203:13054"}}}] '
+            'hyperlink {"nodeId":"203:11374"} prototypeNodeId="1999:85"',
+            {"figma_pointers": ["203:13054", "203:11374", "1999:85"]},
+        ),
+        (
+            '<node id="85:1999" prototypeNode="203:11374" hyperlinkNode="203:13054" />',
+            {"figma_pointers": ["203:11374", "203:13054"]},
+        ),
+        (
+            "plain prose without pointer JSON",
+            {"figma_pointers": []},
         ),
     ]
     failed = 0

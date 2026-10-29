@@ -13,7 +13,7 @@ compatibility: python3, dev.mcp
 
 Load [../dev-shared/SKILL.md](../dev-shared/SKILL.md). Working tree + local commit. No push. A visual bug also loads [../dev-qa-guided-review/references/design-fidelity.md](../dev-qa-guided-review/references/design-fidelity.md) and applies the screen visual contract before UI.
 
-1. `fix-plan.md`: cause, regression test, exact files, minimal change, risks, command. Visual bugs list the screen facts that change (fixed size, absolute position, complex style, copy).
+1. `fix-plan.md`: cause, regression test, exact files, minimal change, risks, command. Visual bugs list the screen facts that change (fixed size, absolute position, complex style, copy) and cite the **screen** `node-id` — values from the Figma pack (`figma/<node-id>.json`; fetch only when the pack lacks the node or `figma_get_file_meta` shows a newer `lastModified`) before any UI edit.
 2. **⛔ Gate B-D** — Write the Gate briefing in chat before the question (confirming, artifact path, summary of the minimal patch, confirm vs reject). Prompt verbatim `Gate B-D — Confirm minimal patch`. Does not authorize push. Do not re-ask facts already in intake `## Decisions`.
 3. Regression test from the reproduction. Prove **RED** on the pre-fix commit (scratch/worktree).
 4. Minimal patch at the source of the cause. No opportunistic refactor, new dependency, or “just in case”.

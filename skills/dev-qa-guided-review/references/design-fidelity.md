@@ -15,18 +15,35 @@ If only a spec-sheet remains in inventory after Step 1.5, (b) = `INCOMPLETE` or 
 
 ## Step 1.5 — Resolve pointers (required)
 
-The parser (`extract_refs.py`) only sees URLs with `node-id` in the query, `node-id=` in text, `id="N:M"` in XML, and bare IDs `N:MMM` (`figma_node_ids`). Figma internal hyperlinks **do not** appear there. After `figma_get_design_context` / `figma_get_metadata` on the node extracted from the ticket/MR:
+The parser (`extract_refs.py`) sees URLs with `node-id` in the query, `node-id=` in text, `id="N:M"` in XML, bare IDs `N:MMM`, and — since pointers are passed through — the destinations in `figma_pointers` (`prototypeNodeId`, `destinationNodeId` from prototype reactions, `nodeId` inside a `hyperlink` object). `figma_get_design_context` returns `hyperlink` and `reactions` on every node, and `figma_get_metadata` XML carries `hyperlinkNode`/`prototypeNode` attrs when present. After `figma_get_design_context` / `figma_get_metadata` on the node extracted from the ticket/MR:
 
-1. Run metadata XML/text + node copy through `extract_refs.py` (`figma_node_ids`).
-2. Treat as a pointer if copy contains: “see this screen”, “this screen”, “see frame”, “see the modal”, “visual reference”.
-3. Extract destinations from: hyperlinks, reactions, prototype connections, `prototypeNodeId`, `related` nodes, IDs in text.
-4. **One hop** required: fetch each destination with `figma_get_metadata` + `figma_get_design_context` (`nodeIds` and screenshot). Do not request variables. Do not scan the file.
+1. Run metadata XML/text + node copy through `extract_refs.py` (`figma_node_ids`, `figma_pointers`).
+2. Treat as a pointer if copy contains: "see this screen", "this screen", "see frame", "see the modal", "visual reference", **or** the node carries a `hyperlink.nodeId` / a `reactions` destination.
+3. Extract destinations from: `hyperlink`, `reactions`, prototype connections, `prototypeNodeId`, related nodes, IDs in text.
+4. **One hop** required: fetch each destination with `figma_get_metadata` + `figma_get_design_context` (`nodeIds` and screenshot; both land in the pack, below). Do not request variables. Do not scan the file.
 5. In the **same page section**, include visible siblings of the cited component (modal, drawer, empty, hover) — no second hop outside the section.
 6. Classify each node: `spec` or `screen`. Each `screen` enters the Gate B inventory as extra `fileKey` + `node-id`.
 7. A pointer that **does not resolve** → (b) incomplete. Do not continue (b) with the spec-sheet alone.
 8. `figma_get_comments` only if the AC cites a comment.
 
 Quota: do not call `figma_get_file` without `depth`/`ids`. One hop + section siblings is the cap, unless the user points at another `node-id`.
+
+## Figma pack — fetch once per screen, reuse downstream
+
+Intake and design persist what they fetch; execute/verify/reviews read the pack from disk instead of refetching:
+
+- Location: `<flow_dir>/figma/<node-id>.json` (the `figma_get_design_context` payload, dash form: `3544-5710.json`), `<node-id>.png` (the screen screenshot), and `pack.json` (manifest with `fileKey`, `nodeId`, `lastModified`, `fetchedAt`).
+- After fetching a screen, save the payload + PNG and run `python3 "$SHARED/scripts/figma_pack.py" <flow_dir>`; run it with `--check` before a review to prove every screen cited in `design.md` is packed.
+- Downstream steps (execute, verify, QA, MR review) `Read` the pack JSON/PNG; the numbers come from there.
+- Refetch a node only when `figma_get_file_meta` returns a `lastModified` newer than the pack entry, or when the payload reported `truncated` (use `truncation.nextChildIds` to fetch exactly the cut children).
+
+## Comparison triage (optional, never a substitute for the screen)
+
+When the surface runs, capture the app screenshot at the frame's width (the pack's `size`) and compare it against the pack PNG:
+
+- Minimum: side-by-side or 50/50 overlay, recorded in the report with both paths.
+- Optional scoring (heatmap/RMSE) is **triage**: it ranks regions to inspect; it does not prove fidelity. The screen-frame comparison rules above still decide `OK`/`GAP`.
+- A mismatch triage never replaces the reportable-mismatch checklist; a clean score never marks (b) OK without the checklist.
 
 ## Dimension (b) target: pixel-perfect
 
@@ -45,7 +62,7 @@ Rules:
 - A spec-sheet screenshot does **not** count as (b) evidence.
 - (b) `OK` only if every visible diff surface has a compared **screen** frame (Gate C must confirm those `node-id`s).
 - No pixel-diff engine in this version. An app browser is optional; Figma × code is required.
-- A cropped frame, a screenshot `warnings` entry, or a design-context payload with `truncated` / `childrenTruncated` → declare **unknown** in the report’s Unknowns section; do **not** mark (b) OK. `truncation.hint` says to pass `depth` or a child `node-id`. A node with `childrenTruncated` can be fetched on its own `node-id` to close that unknown.
+- A cropped frame, a screenshot `warnings` entry, or a design-context payload with `truncated` / `childrenTruncated` → declare **unknown** in the report’s Unknowns section; do **not** mark (b) OK. `truncation.nextChildIds` lists the exact node ids whose children were cut; fetch those ids (and save them into the pack) to close that unknown.
 - Variables are optional. A variables 403, a variables quota error, or a `warnings` entry that only mentions variables is not unknown, not a gap, and not `INCOMPLETE`. Do not call `figma_get_variable_defs`. Fidelity uses the screen screenshot and the literal fields on the node (`size`, `fills`, `strokes`, `text`). A `visual.boundVariables` id does not replace those literals when variable definitions were not read.
 - Do not claim visual fidelity without a screen-frame screenshot. Conversely: **do not close a visual GAP without that frame**.
 

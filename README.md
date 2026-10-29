@@ -58,7 +58,7 @@ Python 3 is the only skill runtime. No installer daemon.
 
 ## Artifacts in the target project
 
-Git-native memory under `.dev/features/<slug>/` (feature) and `.dev/bugs/<slug>/` (bug). Dual-review reports stay **in chat** and include a Completeness profile; `reviews/round-NNN.md` stores only confirmed findings, and `reviews/readiness.md` stores each review’s verdict, open-row count, and reviewed commit for `dev-ship`.
+Git-native memory under `.dev/features/<slug>/` (feature) and `.dev/bugs/<slug>/` (bug). Dual-review reports stay **in chat** and include a Completeness profile; `reviews/round-NNN.md` stores only confirmed findings, and `reviews/readiness.md` stores each review’s verdict, open-row count, reviewed commit, and — on UI features — the `QA figma-screens` coverage line for `dev-ship`. The **Figma pack** (`figma/<node-id>.json` + `.png` + `pack.json`) persists each screen once at intake/design and is the source downstream steps read; `figma_pack.py --check` proves the pack covers every screen cited in `design.md`.
 
 ## Permissions
 

@@ -25,6 +25,6 @@ Before any `dev-*` step, read in full:
 
 Agent mode is active only when `.dev/STATE.md` has `mode: agent` **and** `dev-feature-agent` or `dev-bug-agent` loaded this skill in the current conversation. Then read [references/agent-mode.md](references/agent-mode.md) in full before any gate. A skill the user invoked directly runs in manual mode even if `STATE.md` still says `mode: agent` (an interrupted run): write `mode: manual` first. Every `mode: agent` rule in a step skill means this active agent mode.
 
-Parser: `python3 "$SKILL_DIR/scripts/extract_refs.py"` (no network). State: `python3 "$SKILL_DIR/scripts/validate_state.py"`. Commits: `python3 "$SKILL_DIR/scripts/check_commit.py"`.
+Parser: `python3 "$SKILL_DIR/scripts/extract_refs.py"` (no network). State: `python3 "$SKILL_DIR/scripts/validate_state.py"`. Commits: `python3 "$SKILL_DIR/scripts/check_commit.py"`. Figma pack: `python3 "$SKILL_DIR/scripts/figma_pack.py" <flow_dir> [--check]`. Legacy repos: `legacy_check.py`. Ticket × frame: `map_tickets_frames.py`. Task merges: `merge_wave.py`.
 
 This skill does **not** implement a feature or a bug. It only defines the contract other skills must follow.

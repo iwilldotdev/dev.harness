@@ -332,6 +332,167 @@ class ValidatorsTest(unittest.TestCase):
             errors = self.state.validate(state)
             self.assertTrue(any("mode" in e for e in errors))
 
+    def test_design_row_needs_a_concrete_fact(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            design = Path(tmp) / "design.md"
+            design.write_text(
+                "# Design\n\nFigma screen 203:13054.\n\n## Visual contract\n\n"
+                "| Region | Screen node-id | Facts |\n| --- | --- | --- |\n"
+                "| Modal | 203:13054 | FIXED 480x320, radius 16 |\n"
+                "| Button | 203:13060 | follows the design system |\n"
+                "| No node | follows the design system |\n",
+                encoding="utf-8",
+            )
+            errors = self.design.validate(design)
+            self.assertTrue(any("row 2 needs a concrete fact" in e for e in errors))
+            self.assertTrue(any("row 3 must cite the screen node-id" in e for e in errors))
+            design.write_text(
+                "# Design\n\nFigma screen 203:13054.\n\n## Visual contract\n\n"
+                "| Region | Screen node-id | Facts |\n| --- | --- | --- |\n"
+                "| Modal | 203:13054 | FIXED 480x320, radius 16 |\n"
+                "| Button | 203:13060 | 24x24, copy \"Pay now\" |\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(self.design.validate(design), [])
+
+    def test_spec_ui_section_requires_node_id(self) -> None:
+        text = (FIX / "feature-figma-no-contract" / "spec.md").read_text(encoding="utf-8")
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = Path(tmp) / "spec.md"
+            spec.write_text(
+                text + "\n## Visual contract\n\nScreen 203:13054 width FIXED 320.\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(self.spec.validate(spec), [])
+            # A second UI REQ section without any node-id must fail.
+            spec.write_text(
+                text
+                + "\n## REQ-002\n\nWhen the shopper opens the drawer, then it shows the cart.\n"
+                "Origin: intake.\nExpected outcome: drawer opens.\n"
+                "\n## Visual contract\n\nScreen 203:13054 width FIXED 320.\n",
+                encoding="utf-8",
+            )
+            errors = self.spec.validate(spec)
+            self.assertTrue(any("must cite the screen node-id" in e for e in errors))
+
+    def test_spec_visual_contract_screens_must_be_covered(self) -> None:
+        text = (FIX / "feature-figma-no-contract" / "spec.md").read_text(encoding="utf-8")
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = Path(tmp) / "spec.md"
+            spec.write_text(
+                text
+                + "\n## Visual contract\n\n| Region | node-id | Facts |\n| --- | --- | --- |\n"
+                "| Modal | 203:13054 | 480x320 |\n| Drawer | 777:12345 | 320x640 |\n",
+                encoding="utf-8",
+            )
+            errors = self.spec.validate(spec)
+            self.assertTrue(any("777:12345 is not cited" in e for e in errors))
+
+    def test_tasks_ui_task_requires_node_id(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tasks = Path(tmp) / "tasks.md"
+            tasks.write_text(
+                "# Tasks\n\n## Task 1 — Modal\n\n- Files: `src/modal.tsx`\n"
+                "- REQ-001\n- Gate: tests pass\n- RED/GREEN\n"
+                "- Interfaces: none\n- UI: modal per the design system\n",
+                encoding="utf-8",
+            )
+            errors = self.tasks.validate(tasks)
+            self.assertTrue(any("UI task must name the screen node-id" in e for e in errors))
+            tasks.write_text(
+                "# Tasks\n\n## Task 1 — Modal\n\n- Files: `src/modal.tsx`\n"
+                "- REQ-001\n- Gate: tests pass\n- RED/GREEN\n"
+                "- Interfaces: none\n- UI (screens): `203:13054` (480x320)\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(self.tasks.validate(tasks), [])
+            tasks.write_text(
+                "# Tasks\n\n## Task 2 — API\n\n- Files: `src/api.ts`\n"
+                "- REQ-002\n- Gate: tests pass\n- RED/GREEN\n"
+                "- Interfaces: none\n- UI: sem screen dedicada\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(self.tasks.validate(tasks), [])
+
+    def test_readiness_requires_figma_screens_when_design_has_contract(self) -> None:
+        def git(repo: Path, *args: str) -> str:
+            return subprocess.run(
+                ["git", "-C", str(repo), "-c", "user.name=t", "-c", "user.email=t@t",
+                 "-c", "commit.gpgsign=false", *args],
+                check=True, capture_output=True, text=True,
+            ).stdout.strip()
+
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            git(repo, "init", "-q")
+            (repo / "app.ts").write_text("export const a = 1;\n", encoding="utf-8")
+            git(repo, "add", ".")
+            git(repo, "commit", "-q", "-m", "feat: app")
+            sha = git(repo, "rev-parse", "HEAD")
+            flow = repo / ".dev" / "features" / "otp"
+            (flow / "reviews").mkdir(parents=True)
+            (flow / "design.md").write_text(
+                "# Design\n\n## Visual contract\n\n"
+                "| Region | node-id | Facts |\n| --- | --- | --- |\n"
+                "| Modal | 203:13054 | 480x320 |\n",
+                encoding="utf-8",
+            )
+            receipt = flow / "reviews" / "readiness.md"
+            receipt.write_text(
+                f"MR verdict: APPROVE\nMR open rows: 0\nMR reviewed: {sha}\n"
+                "QA verdict: APPROVE\nQA open rows: 0\n"
+                f"QA reviewed: {sha}\n",
+                encoding="utf-8",
+            )
+            errors = self.readiness.validate(flow, repo)
+            self.assertTrue(any("needs a figma-screens line" in e for e in errors))
+            self.assertTrue(any("missing Figma pack PNG" in e for e in errors))
+
+            receipt.write_text(
+                f"MR verdict: APPROVE\nMR open rows: 0\nMR reviewed: {sha}\n"
+                "QA verdict: APPROVE\nQA open rows: 0\nQA figma-screens: 0/1\n"
+                f"QA reviewed: {sha}\n",
+                encoding="utf-8",
+            )
+            errors = self.readiness.validate(flow, repo)
+            self.assertTrue(any("covers fewer than the 1 screens" in e for e in errors))
+            self.assertTrue(any("missing Figma pack PNG" in e for e in errors))
+
+            (flow / "figma").mkdir()
+            (flow / "figma" / "203-13054.png").write_bytes(b"png")
+            receipt.write_text(
+                f"MR verdict: APPROVE\nMR open rows: 0\nMR reviewed: {sha}\n"
+                "QA verdict: APPROVE\nQA open rows: 0\nQA figma-screens: 1/1\n"
+                f"QA reviewed: {sha}\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(self.readiness.validate(flow, repo), [])
+
+    def test_readiness_without_design_skips_figma_screens(self) -> None:
+        def git(repo: Path, *args: str) -> str:
+            return subprocess.run(
+                ["git", "-C", str(repo), "-c", "user.name=t", "-c", "user.email=t@t",
+                 "-c", "commit.gpgsign=false", *args],
+                check=True, capture_output=True, text=True,
+            ).stdout.strip()
+
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            git(repo, "init", "-q")
+            (repo / "app.ts").write_text("export const a = 1;\n", encoding="utf-8")
+            git(repo, "add", ".")
+            git(repo, "commit", "-q", "-m", "feat: app")
+            sha = git(repo, "rev-parse", "HEAD")
+            flow = repo / ".dev" / "features" / "otp"
+            (flow / "reviews").mkdir(parents=True)
+            (flow / "reviews" / "readiness.md").write_text(
+                f"MR verdict: APPROVE\nMR open rows: 0\nMR reviewed: {sha}\n"
+                "QA verdict: APPROVE\nQA open rows: 0\n"
+                f"QA reviewed: {sha}\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(self.readiness.validate(flow, repo), [])
+
 
 if __name__ == "__main__":
     unittest.main()

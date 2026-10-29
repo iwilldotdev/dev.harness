@@ -20,7 +20,7 @@ Load [../dev-shared/SKILL.md](../dev-shared/SKILL.md). One task = one test cycle
 - Covered `REQ-NNN`, `Depends on`
 - RED/GREEN test with a **command** and an observable gate
 - User-facing feature: UAT/E2E scenario if the repo has a runtime; do not substitute static inspection
-- UI task: names the screen `node-id` and the visual-contract facts it must land (fixed size, absolute position, complex style, copy). `dev-verify-feature` and QA check them against the screen; the script does not
+- UI task: names the screen `node-id` and the visual-contract facts it must land (fixed size, absolute position, complex style, copy) — `validate_tasks.py` fails a task whose block has UI surface vocabulary without a node-id; a task with no dedicated screen declares `UI: sem screen` explicitly. `dev-verify-feature` and QA check the facts against the screen; the script does not
 - Zero TBD / “similar to Task N”
 
 ```bash

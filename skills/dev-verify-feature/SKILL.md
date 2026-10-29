@@ -18,7 +18,7 @@ Load [../dev-shared/SKILL.md](../dev-shared/SKILL.md) and, when the feature has 
 
 1. Re-run gates/tests.
 2. Each `REQ-NNN` → outcome, test, `path:line`.
-3. High-risk: failure/rollback/compatibility. UI: **screen** frame, cited states, and the visual contract (fixed size, absolute position, complex fill, effect, stroke, opacity, copy) against `path:line`.
+3. High-risk: failure/rollback/compatibility. UI: **screen** frame, cited states, and the visual contract (fixed size, absolute position, complex fill, effect, stroke, opacity, copy) against `path:line` — values come from the Figma pack (`figma/<node-id>.json`); run `figma_pack.py --check` first. When the surface runs, add the comparison triage (design-fidelity.md): app screenshot at the frame width vs the pack PNG, side-by-side/overlay in the report.
 4. Executable end-to-end flow (browser → API → state) if the surface exists; otherwise INCOMPLETE, do not infer.
 5. `validation.md`: PASS / FAIL / INCOMPLETE, plus `## Completeness`. No evidence = FAIL.
 

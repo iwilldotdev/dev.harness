@@ -48,7 +48,7 @@ If `.dev/STATE.md` has `mode: agent`, do not ask. Follow [../dev-shared/referenc
 4. **Zero hardcoded target.** No `projectId`, IID, path, or file key in this skill.
 5. **Does not replace `dev-mr-guided-review`.** One report line points to it.
 6. **Outside MCP:** `Read` / `Grep` / `Glob`; `git remote`, `git branch`, `git merge-base`, `git diff <base>...<head>`. Do not use `glab` as the primary path.
-7. **Figma quota.** Prefer `figma_get_design_context` with `nodeIds`. Never `figma_get_file` without `depth`/`ids`.
+7. **Figma quota.** Prefer the flow's Figma pack (`figma/<node-id>.json` + `.png`); run `figma_pack.py --check` and only fetch (`figma_get_design_context` with `nodeIds`) what the pack lacks or what `figma_get_file_meta` shows as stale. Never `figma_get_file` without `depth`/`ids`.
 8. **Pixel-perfect on (b).** A spec-sheet does not replace a screen. Do not claim (b) OK without a screenshot of a **screen** frame. Do not close a visual GAP with invented UI (generic Modal, copy from another i18n key, “equivalent flow”). Detail in `design-fidelity.md`.
 9. **When unsure, ask (manual).** Several MRs, 0 MR, several remotes/repos, spec vs screen frame, degrading a dimension: stop and ask. Do not invent the target. In `mode: agent`, do not ask: decide from intake `## Decisions` and surrounding evidence, or stop and explain.
 
@@ -142,7 +142,7 @@ With the target confirmed:
 2. **Branch mode:** `git diff <merge-base>...<HEAD>` (and `--stat`). `gitlab_list_pipelines` (`ref` = branch) if `projectId` is known; failed jobs → `gitlab_get_pipeline` + `gitlab_get_pipeline_jobs`. Without an IID, do not call `gitlab_get_merge_request`.
 3. Concatenate title/description/notes (MR) **or** branch + `git log <merge-base>..HEAD --oneline` + user text → `extract_refs.py`.
 4. **Jira:** `jira_get_issue` + `jira_get_remote_issue_links`. `jira_search_jql` only if the key is ambiguous. Run `extract_refs.py` on description + links.
-5. **Figma (ticket nodes):** for each URL/`fileKey`+`node-id`, `figma_get_design_context` + `figma_get_metadata` (required; not “if needed”). Then Step 1.5. `figma_download_assets` only if the AC cites an asset. Never the whole file.
+5. **Figma (ticket nodes):** for each URL/`fileKey`+`node-id`, use the pack entry when it exists (Read `figma/<node-id>.json`/`.png`); otherwise `figma_get_design_context` + `figma_get_metadata` (required; not “if needed”) and save both into the pack. Then Step 1.5. `figma_download_assets` only if the AC cites an asset. Never the whole file.
 6. **CI (MR mode):** failed pipelines in the payload → jobs. Cap = status/name (no log).
 7. **Contracts:** `gitlab_get_repository_file` only for OpenAPI/types/clients cited in the diff. `gitlab_search` `scope: blobs` only on rename/move. `gitlab_get_commit` only for a specific SHA. Branch mode: `ref` = `sourceBranch`.
 8. **Confluence:** only if a link points to a page **and** Jira has no AC/Figma. Announce at Gate B.
@@ -159,7 +159,7 @@ Read `integration-heuristics.md` and `design-fidelity.md` again for (b). No new 
 
 **(a) Business rules.** Jira criteria × diff/test (`path:line`) or `MISSING`.
 
-**(b) Pixel-perfect.** Only frames classified `screen`. Compare the visual contract: screen screenshot plus `visual`, `layout`, `fills`, `strokes`, and `text`. Mismatch: layout, typography, overlay, asset, spacing, token, state, copy, missing, `fixed-size`, `absolute`, `effect`, `complex-fill`, `stroke`, `opacity`. “Looks like the DS” ≠ OK. Without a confirmed screen, do not mark OK.
+**(b) Pixel-perfect.** Only frames classified `screen`. Compare the visual contract: screen screenshot plus `visual`, `layout`, `fills`, `strokes`, and `text` — from the pack. Mismatch: layout, typography, overlay, asset, spacing, token, state, copy, missing, `fixed-size`, `absolute`, `effect`, `complex-fill`, `stroke`, `opacity`. “Looks like the DS” ≠ OK. Without a confirmed screen, do not mark OK. When the surface runs, add the comparison triage from design-fidelity.md (app screenshot at the frame width vs the pack PNG; score/heatmap is triage, never proof). Count the screens actually compared — this run's `figma-screens` number.
 
 **(c) Integration.** Contracts, breaking changes, callers outside the diff, failed CI, flags. Failure scenario + blast radius.
 
@@ -169,7 +169,7 @@ Read `integration-heuristics.md` and `design-fidelity.md` again for (b). No new 
 
 Fill `report-template.md` in chat, including section 3 Completeness. Section 10 only if requested. Verdict: `APPROVE` / `ADJUST` / `BLOCK` / `INCOMPLETE`.
 
-The full report stays in chat. Never write `QA_REVIEW.md`. Inside an active flow, rewrite the three `QA` lines of the readiness receipt after every run, whatever the verdict, as defined in [../dev-shared/references/evidence-contract.md](../dev-shared/references/evidence-contract.md#readiness-receipt). Outside a flow, write nothing.
+The full report stays in chat. Never write `QA_REVIEW.md`. Inside an active flow, rewrite the three `QA` lines of the readiness receipt after every run, whatever the verdict, as defined in [../dev-shared/references/evidence-contract.md](../dev-shared/references/evidence-contract.md#readiness-receipt) — and when the flow's `design.md` has a `## Visual contract`, add `QA figma-screens: <compared>/<cited>` (cited = screens in that section; compared = screens this run actually compared against the implementation). Outside a flow, write nothing.
 
 Branch mode: section 1 says **MR: none (branch review)** + merge-base; do not invent an IID.
 

@@ -22,7 +22,7 @@ Working tree + local commits. No push. MCP read-only.
 1. Load only spec, current design/task, decisions, and necessary code.
 2. Tests derive from spec outcomes, not from the code. Record a RED failure before implementing new behavior.
 3. Minimum for GREEN. Focused gate + regression proportional to risk. One atomic commit per task (`check_commit.py`).
-4. **UI:** open the **screen** `node-id` (`figma_get_design_context` + screenshot) **before** JSX. Apply the visual contract in `design.md` or, when design was skipped, the screen node’s `visual`, `layout`, `fills`, `strokes`, and `text`. The task receipt lists each applied value (fixed size, absolute position, complex fill, effect, stroke, opacity, copy). Forbidden: generic Modal/Drawer, borrowed i18n, “equivalent flow”.
+4. **UI:** read the **screen** `node-id` from the Figma pack (`figma/<node-id>.json` + `.png`) **before** JSX; call `figma_get_design_context` only when the pack lacks the node or `figma_get_file_meta` reports a newer `lastModified`. Apply the visual contract in `design.md` or, when design was skipped, the screen node’s `visual`, `layout`, `fills`, `strokes`, and `text`. The task receipt is a **table per region** (`região | node-id | fato | valor aplicado`), covering fixed size, absolute position, complex fill, effect, stroke, opacity, and copy. Forbidden: generic Modal/Drawer, borrowed i18n, “equivalent flow”.
 5. Intake/spec/design contradiction → return to the originating gate. No silent `SPEC_DEVIATION`.
 6. Batches of ~5–7 tasks: fresh worker; worktree/scratch, never stash. Worker does not push.
 7. Task failure → `dev-debug` in `task-failure` mode (Gate F-X). Do not create `.dev/bugs`. Do not turn this into a Bug cycle.
